@@ -89,3 +89,31 @@ class CandidateProfile(UUIDTimeStampedModel):
             (bool(self.remote_work_preference), 10),
         ]
         return sum(score for fulfilled, score in weights if fulfilled)
+
+
+class CandidateSkill(UUIDTimeStampedModel):
+    """
+    Skill possessed by a candidate with self-reported years of experience.
+    """
+    candidate = models.ForeignKey(
+        CandidateProfile,
+        on_delete=models.CASCADE,
+        related_name="skills",
+    )
+    skill = models.ForeignKey(
+        "jobs.Skill",
+        on_delete=models.CASCADE,
+        related_name="candidate_skills",
+    )
+    years_of_experience = models.PositiveIntegerField(_("years of experience"), default=1)
+
+    class Meta:
+        verbose_name = _("candidate skill")
+        verbose_name_plural = _("candidate skills")
+        unique_together = ("candidate", "skill")
+        indexes = [
+            models.Index(fields=["candidate", "skill"]),
+        ]
+
+    def __str__(self):
+        return f"{self.candidate.user.get_full_name()} - {self.skill.name} ({self.years_of_experience} yrs)"

@@ -50,3 +50,13 @@ class PublicCandidateProfileSerializer(serializers.ModelSerializer):
             "completeness_score",
         ]
         read_only_fields = fields
+
+
+class CandidateSkillSerializer(serializers.ModelSerializer):
+    skill_name = serializers.CharField(source="skill.name", read_only=True)
+
+    class Meta:
+        from apps.candidates.models import CandidateSkill
+        model = CandidateSkill
+        fields = ["id", "skill", "skill_name", "years_of_experience"]
+        read_only_fields = ["id"]
