@@ -1,7 +1,11 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, viewsets, permissions, filters
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
+from django.utils import timezone
 from apps.common.responses import APIResponse
-from apps.jobs.models import JobCategory, Skill
-from apps.jobs.serializers import JobCategorySerializer, SkillSerializer
+from apps.jobs.models import JobCategory, Skill, Job, JobStatus
+from apps.jobs.serializers import JobCategorySerializer, SkillSerializer, JobSerializer
+from apps.jobs.filters import JobFilter
 
 
 class JobCategoryListView(generics.ListCreateAPIView):
@@ -47,3 +51,28 @@ class SkillListView(generics.ListCreateAPIView):
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
         return APIResponse(data=response.data)
+
+
+class PublicJobViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Public API for discovering and inspecting published job vacancies.
+    GET /api/v1/jobs/
+    GET /api/v1/jobs/{id}/
+    """
+    serializer_class = JobSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = "id"
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = JobFilter
+    ordering_fields = ["published_at", "salary_max", "salary_min", "title"]
+    ordering = ["-published_at"]
+
+    def get_queryset(self):
+        """Only returns eligible, published vacancies whose deadline has not expired."""
+        now = timezone.now()
+        return (
+            Job.objects.filter(status=JobStatus.PUBLISHED)
+            .filter(Q(application_deadline__isnull=True) | Q(application_deadline__gt=now))
+            .select_related("company", "category")
+            .prefetch_related("job_skills__skill")
+        )

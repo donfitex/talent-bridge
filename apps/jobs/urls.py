@@ -1,7 +1,7 @@
-from django.urls import path
-from apps.jobs.views import JobCategoryListView, SkillListView
+from rest_framework.routers import DefaultRouter
+from apps.jobs.views import PublicJobViewSet
 
-urlpatterns = [
-    path("categories/", JobCategoryListView.as_view(), name="job-category-list"),
-    path("skills/", SkillListView.as_view(), name="skill-list"),
-]
+router = DefaultRouter()
+router.register(r"", PublicJobViewSet, basename="public-jobs")
+
+urlpatterns = router.urls
