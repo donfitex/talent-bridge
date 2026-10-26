@@ -10,5 +10,6 @@ urlpatterns = [
     path("api/v1/candidates/", include("apps.candidates.urls")),
     path("api/v1/job-categories/", JobCategoryListView.as_view(), name="api-job-categories"),
     path("api/v1/skills/", SkillListView.as_view(), name="api-skills"),
+    path("api/v1/employer/jobs/", include("apps.jobs.employer_urls")),
     path("api/v1/jobs/", include("apps.jobs.urls")),
 ]
