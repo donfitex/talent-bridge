@@ -1,0 +1,55 @@
+[project]
+name = "talent-bridge"
+version = "0.1.0"
+description = "Production-Ready Job Discovery, Recruitment & Applicant Tracking Platform"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "TalentBridge Team" }
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = [
+    ".git",
+    ".venv",
+    "migrations",
+    "staticfiles",
+    "media",
+    "__pycache__"
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C4",  # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.testing"
+python_files = ["test_*.py", "*_test.py"]
+testpaths = ["tests"]
+addopts = "--strict-markers --no-migrations"
+
+[tool.coverage.run]
+source = ["apps"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/admin.py",
+    "*/apps.py"
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
