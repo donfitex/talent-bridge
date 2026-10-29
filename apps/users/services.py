@@ -2,7 +2,9 @@ import logging
 
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.db import transaction
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 
@@ -53,12 +55,20 @@ class UserService:
             return False
 
     @staticmethod
+    @transaction.atomic
     def verify_email(uidb64: str, token: str) -> bool:
         """Validates verification token and activates email verification status."""
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid, is_active=True)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = User.objects.select_for_update().get(pk=uid, is_active=True)
+        except (
+            TypeError,
+            ValueError,
+            OverflowError,
+            UnicodeDecodeError,
+            ValidationError,
+            User.DoesNotExist,
+        ):
             return False
 
         if email_verification_token.check_token(user, token):
@@ -94,12 +104,20 @@ class UserService:
             return False
 
     @staticmethod
+    @transaction.atomic
     def confirm_password_reset(uidb64: str, token: str, new_password: str) -> bool:
         """Resets user password after token verification."""
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid, is_active=True)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = User.objects.select_for_update().get(pk=uid, is_active=True)
+        except (
+            TypeError,
+            ValueError,
+            OverflowError,
+            UnicodeDecodeError,
+            ValidationError,
+            User.DoesNotExist,
+        ):
             return False
 
         if default_token_generator.check_token(user, token):

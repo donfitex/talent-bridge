@@ -104,3 +104,30 @@ def test_verification_tokens_cannot_reset_password(recruitment):
     assert not UserService.verify_email(uid, token)
     reset = default_token_generator.make_token(candidate)
     assert UserService.confirm_password_reset(uid, reset, "new-password")
+
+
+def test_malformed_reset_and_verification_tokens(api_client):
+    assert (
+        api_client.post(
+            "/api/v1/auth/verify-email/", {"uid": "bm90LWEtdXVpZA", "token": "bad"}
+        ).status_code
+        == 400
+    )
+    response = api_client.post(
+        "/api/v1/auth/password/reset/confirm/",
+        {
+            "uid": "bm90LWEtdXVpZA",
+            "token": "bad",
+            "new_password": "Complex-Pass-7239",
+            "new_password_confirm": "Complex-Pass-7239",
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_public_candidate_name_does_not_disclose_email(api_client, recruitment):
+    candidate, employer, _, _ = recruitment
+    api_client.force_authenticate(employer)
+    response = api_client.get(f"/api/v1/candidates/{candidate.candidate_profile.pk}/")
+    assert response.status_code == 200
+    assert candidate.email not in str(response.data)

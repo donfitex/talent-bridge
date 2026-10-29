@@ -34,7 +34,7 @@ class CandidateProfileSerializer(serializers.ModelSerializer):
 class PublicCandidateProfileSerializer(serializers.ModelSerializer):
     """Sanitized view of a candidate profile protecting private contact details."""
 
-    full_name = serializers.CharField(source="user.get_full_name", read_only=True)
+    full_name = serializers.SerializerMethodField()
     completeness_score = serializers.IntegerField(read_only=True)
 
     class Meta:
@@ -52,6 +52,9 @@ class PublicCandidateProfileSerializer(serializers.ModelSerializer):
             "completeness_score",
         ]
         read_only_fields = fields
+
+    def get_full_name(self, obj) -> str:
+        return f"{obj.user.first_name} {obj.user.last_name}".strip() or "Candidate"
 
 
 class CandidateSkillSerializer(serializers.ModelSerializer):

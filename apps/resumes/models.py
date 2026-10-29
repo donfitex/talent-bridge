@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from django.db import models
+from django.db import models, transaction
 from django.utils.translation import gettext_lazy as _
 
 from apps.candidates.models import CandidateProfile
@@ -52,8 +52,10 @@ class Resume(UUIDTimeStampedModel):
     def __str__(self):
         return f"{self.title} - {self.candidate.user.get_full_name()}"
 
+    @transaction.atomic
     def set_as_default(self):
         """Sets this resume as default and unsets any previous default."""
+        CandidateProfile.objects.select_for_update().get(pk=self.candidate_id)
         Resume.objects.filter(candidate=self.candidate, is_default=True).exclude(pk=self.pk).update(
             is_default=False
         )

@@ -19,7 +19,11 @@ class AuthenticationRateLimitMiddleware:
                 request.META.get("REMOTE_ADDR", "unknown"), int(timezone.now().timestamp()) // 300
             )
             cache.add(key, 0, timeout=300)
-            count = cache.incr(key)
+            try:
+                count = cache.incr(key)
+            except ValueError:
+                cache.set(key, 1, timeout=300)
+                count = 1
             if count > settings.AUTH_RATE_LIMIT:
                 response = JsonResponse(
                     {

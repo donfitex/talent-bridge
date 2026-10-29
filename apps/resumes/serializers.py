@@ -21,6 +21,7 @@ class ResumeSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
+            "is_default",
             "original_filename",
             "file_type",
             "file_size",

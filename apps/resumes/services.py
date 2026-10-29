@@ -1,6 +1,8 @@
 import mimetypes
 import os
 
+from django.db import transaction
+
 from apps.candidates.models import CandidateProfile
 from apps.common.validators import validate_resume_file
 from apps.resumes.models import Resume
@@ -14,9 +16,11 @@ class ResumeService:
     """
 
     @staticmethod
+    @transaction.atomic
     def upload_resume(
         candidate: CandidateProfile, file_obj, title: str, is_default: bool = False
     ) -> Resume:
+        CandidateProfile.objects.select_for_update().get(pk=candidate.pk)
         # Validate file format and magic bytes
         validate_resume_file(file_obj)
 
