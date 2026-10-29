@@ -59,3 +59,27 @@ def test_notification_outbox_retry_and_owner(api_client, recruitment, settings):
     assert api_client.post(f"/api/v1/notifications/{item.pk}/read/").status_code == 200
     api_client.force_authenticate(employer)
     assert api_client.get("/api/v1/employer/reports/").data["data"]["applications"] == 1
+
+
+def test_withdrawal_cancels_scheduled_interviews(recruitment):
+    from apps.applications.services import ApplicationWithdrawalService
+    from apps.interviews.services import InterviewService
+
+    candidate, employer, job, resume = recruitment
+    application = ApplicationSubmissionService.submit_application(candidate, job.pk, resume.pk)
+    for target in ["UNDER_REVIEW", "SHORTLISTED", "INTERVIEW"]:
+        ApplicationTransitionService.transition(employer, application.pk, target)
+    start = timezone.now() + timedelta(days=1)
+    item = InterviewService.schedule(
+        employer,
+        {
+            "application": application,
+            "interviewer": employer,
+            "starts_at": start,
+            "ends_at": start + timedelta(hours=1),
+            "location": "Office",
+        },
+    )
+    ApplicationWithdrawalService.withdraw(candidate, application.pk)
+    item.refresh_from_db()
+    assert item.status == "CANCELLED"

@@ -148,6 +148,7 @@ class ApplicationWithdrawalService:
         ApplicationStatusHistory.objects.create(
             application=application, actor=user, previous_status=previous, status=application.status
         )
+        _cancel_scheduled_interviews(application)
         ApplicationSubmissionService._notify_employer_on_application(application)
         return application
 
@@ -184,5 +185,19 @@ class ApplicationTransitionService:
         ApplicationStatusHistory.objects.create(
             application=application, actor=user, previous_status=previous, status=target, note=note
         )
+        if target in {ApplicationStatus.REJECTED, ApplicationStatus.HIRED}:
+            _cancel_scheduled_interviews(application)
         ApplicationSubmissionService._notify_employer_on_application(application)
         return application
+
+
+def _cancel_scheduled_interviews(application):
+    from apps.interviews.models import Interview
+    from apps.interviews.services import notify_interview
+
+    for item in Interview.objects.select_for_update().filter(
+        application=application, status="SCHEDULED"
+    ):
+        item.status = "CANCELLED"
+        item.save(update_fields=["status", "updated_at"])
+        notify_interview(item)

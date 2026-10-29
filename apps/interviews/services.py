@@ -17,6 +17,13 @@ def notify_interview(item):
         f"interview:{item.pk}:{item.updated_at.isoformat()}",
     )
 
+    NotificationService.enqueue(
+        item.interviewer,
+        "Interview update",
+        f"{item.application.job.title}: {item.status}, {item.starts_at.isoformat()}, {item.location}",
+        f"interview:{item.pk}:{item.updated_at.isoformat()}:interviewer",
+    )
+
 
 class InterviewService:
     @staticmethod
