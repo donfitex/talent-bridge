@@ -8,11 +8,14 @@ free Redis-compatible cache, and a five-minute notification/reminder cron job.
 Names are unique to this project and do not modify unrelated workspace services.
 The web service runs migrations before deployment, serves built static assets via
 WhiteNoise, checks `/health/`, and uses the hostname Render assigns automatically.
-The default onrender.com URL needs no custom domain. Billing and SMTP setup are
-required before applying the Blueprint.
+The default onrender.com URL needs no custom domain. The user requested prepared deployment only: do not activate paid resources.
+Billing and SMTP setup remain required before a later deployment.
 
-Set EMAIL_HOST, EMAIL_HOST_USER, EMAIL_HOST_PASSWORD and DEFAULT_FROM_EMAIL in
-Render's secure Blueprint setup; SMTP uses port 587 and TLS by default. Cron obtains
+Brevo is the selected provider. EMAIL_HOST is smtp-relay.brevo.com; SMTP uses
+port 587 with STARTTLS (EMAIL_USE_TLS=True). Supply EMAIL_HOST_USER using the
+SMTP login from Brevo Settings > SMTP & API, EMAIL_HOST_PASSWORD using a Brevo
+SMTP key (not an API key or account password), and DEFAULT_FROM_EMAIL using a
+verified sender. Enter these in Render's secure Blueprint setup. Cron obtains
 these settings from the web service. Both use the same database/cache. Do not commit
 any actual credentials. If your provider requires port 465, set EMAIL_USE_SSL=True and EMAIL_USE_TLS=False.
 
@@ -53,3 +56,11 @@ A Render persistent disk restricts this initial deployment to one web instance a
 interrupts deploys briefly. Move uploads to private object storage before horizontal
 scaling. No backup restore drill, custom-domain DNS, mailbox deliverability or
 load-capacity claim is implied by repository tests.
+
+
+Brevo references:
+- https://developers.brevo.com/docs/smtp-integration
+- https://help.brevo.com/hc/en-us/articles/7959631848850-Create-and-manage-your-SMTP-keys
+
+No external SMTP message was sent during implementation. Unit tests use the
+in-memory backend; real delivery needs the user's SMTP credentials and sender.

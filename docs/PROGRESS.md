@@ -50,3 +50,9 @@ for 46999b9. The deployment review reached a Render payment-method requirement;
 SMTP credentials and live verification are also pending. See RELEASE_AUDIT.md.
 Additional commits: ceeadaf (token/privacy fixes), 1d5db04 (containers/CI), f32302d
 (interview cancellation consistency), 46999b9 (Render Blueprint/runbooks).
+
+
+Final user direction: keep Render deployment prepared without activating paid
+resources. Brevo selected for transactional email; host/port/TLS are configured,
+with SMTP login/key/verified sender intentionally left for secure deployment setup.
+No paid infrastructure or live deployment was activated.

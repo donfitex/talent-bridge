@@ -1,7 +1,8 @@
 # Release audit - 29 October 2026
 
-Status: implementation and automated verification complete; live release awaits
-Render billing setup, SMTP credentials and production smoke verification.
+Status: implementation and automated verification complete. The user explicitly
+requested prepared deployment without activating paid resources. Brevo SMTP
+configuration is prepared; no live Render deployment or email delivery is claimed.
 
 ## Verified
 
@@ -25,12 +26,12 @@ Render billing setup, SMTP credentials and production smoke verification.
 
 CI evidence: https://github.com/donfitex/talent-bridge/actions/runs/40933236244
 
-## External release gates
+## Deferred deployment gates (per user request)
 
 - [ ] User adds a Render payment method directly in the Dashboard. Setup currently
       displays Payment Information Required; no TalentBridge infrastructure activated.
 - [ ] Review the actual resource prices before activating the paid Blueprint.
-- [ ] User configures SMTP host, account, secret and sender in Render, not in chat.
+- [ ] User configures Brevo SMTP login, SMTP key and verified sender in Render, not in chat.
 - [ ] Blueprint applied and exact web deployment reaches live.
 - [ ] HTTPS health and complete candidate/employer smoke journeys pass remotely.
 - [ ] Real mailbox delivery, cron execution and persistence after restart verified.
