@@ -14,7 +14,7 @@ class JobApplicationSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source="job.company.name", read_only=True)
     company_slug = serializers.CharField(source="job.company.slug", read_only=True)
     resume_title = serializers.CharField(source="resume.title", read_only=True)
-    resume_url = serializers.CharField(source="resume.file.url", read_only=True)
+    resume_url = serializers.SerializerMethodField()
 
     class Meta:
         model = JobApplication
@@ -44,3 +44,6 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             "updated_at",
             "withdrawn_at",
         ]
+
+    def get_resume_url(self, obj) -> str:
+        return f"/api/v1/resumes/{obj.resume_id}/download/"
