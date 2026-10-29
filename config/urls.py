@@ -5,6 +5,7 @@ from apps.jobs.views import JobCategoryListView, SkillListView
 from apps.reports.views import RecruitmentReportView
 
 urlpatterns = [
+    path("", include("apps.common.web_urls")),
     path("api/v1/notifications/", include("apps.notifications.urls")),
     path("api/v1/interviews/", include("apps.interviews.urls")),
     path("api/v1/employer/reports/", RecruitmentReportView.as_view()),

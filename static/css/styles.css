@@ -71,3 +71,26 @@ body {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+
+/* Career workspace */
+:root { --ink: #112e2b; --accent: #176b57; }
+.hero { background: #edf5ef; color: var(--ink); border-bottom: 1px solid #d3e3d8; }
+.hero h1 { font-size: clamp(2.6rem, 6vw, 4.8rem); letter-spacing: -.055em; font-weight: 800; line-height: 1.05; margin: 1.2rem 0; }
+.eyebrow { font-size: .75rem; letter-spacing: .16em; font-weight: 700; color: #276754; }
+.search-bar { display: flex; flex-wrap: wrap; align-items: end; gap: 1rem; background: white; padding: 1.25rem; border-radius: 12px; margin-top: 2rem; box-shadow: 0 8px 30px #132b2510; }
+.search-bar label { flex: 1; min-width: 150px; font-size: .8rem; font-weight: 600; }
+.search-bar input, .search-bar select { display: block; border: 0; border-bottom: 1px solid #ccc; padding: .7rem 0; width: 100%; background: white; }
+.job-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,300px),1fr)); gap: 1.25rem; }
+.job-card { background: white; border: 1px solid #dfe7e3; border-radius: 12px; padding: 1.6rem; }
+.job-card a { text-decoration: none; color: #176b57; }
+.company-monogram { display: inline-grid; place-items: center; width: 44px; height: 44px; background: #e8f1eb; color: #176b57; border-radius: 10px; font-size: 1.4rem; font-weight: 700; }
+.tag { background: #edf5ef; border-radius: 5px; padding: .3rem .6rem; font-size: .75rem; color: #285d4f; display: inline-block; }
+.detail-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+.form-panel { max-width: 620px; }
+.form-panel input:not([type=checkbox]), .form-panel select, .form-panel textarea, .job-card input:not([type=checkbox]), .job-card textarea { display: block; width: 100%; border: 1px solid #bacdc3; border-radius: 6px; padding: .65rem; }
+.helptext { font-size: .8rem; color: #53685f; }
+.errorlist { color: #a12235; }
+.empty-state { grid-column: 1/-1; padding: 3rem; text-align: center; background: #edf5ef; border-radius: 12px; }
+.btn-primary { background: #176b57; border-color: #176b57; }
+.btn-primary:hover { background: #104b3d; border-color: #104b3d; }
+@media(max-width:760px) { .detail-grid { grid-template-columns: 1fr; } .search-bar { display: grid; } }

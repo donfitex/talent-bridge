@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block content %}<section class="container py-5"><div class="mx-auto card shadow-sm p-4 form-panel"><p class="eyebrow">TALENTBRIDGE</p><h1 class="h3 mb-4">{{ title }}</h1><form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">Continue</button></form></div></section>{% endblock %}
