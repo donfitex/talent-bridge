@@ -1,0 +1,118 @@
+services:
+- type: web
+  name: talentbridge-web
+  runtime: docker
+  region: frankfurt
+  plan: 0.5c-512mb
+  branch: main
+  repo: https://github.com/donfitex/talent-bridge
+  autoDeployTrigger: checksPass
+  preDeployCommand: python manage.py migrate --noinput
+  healthCheckPath: /health/
+  disk:
+    name: talentbridge-media
+    mountPath: /var/data
+    sizeGB: 1
+  envVars:
+  - &id001
+    key: DJANGO_SETTINGS_MODULE
+    value: config.settings.production
+  - key: DJANGO_SECRET_KEY
+    generateValue: true
+  - &id002
+    key: DJANGO_ALLOWED_HOSTS
+    value: localhost,127.0.0.1
+  - &id003
+    key: DATABASE_URL
+    fromDatabase:
+      name: talentbridge-db
+      property: connectionString
+  - &id004
+    key: REDIS_URL
+    fromService:
+      type: keyvalue
+      name: talentbridge-cache
+      property: connectionString
+  - key: RESUME_STORAGE_DIR
+    value: /var/data/resumes
+  - key: PUBLIC_MEDIA_ROOT
+    value: /var/data/media
+  - &id005
+    key: WEB_CONCURRENCY
+    value: '1'
+  - &id006
+    key: EMAIL_BACKEND
+    value: django.core.mail.backends.smtp.EmailBackend
+  - key: EMAIL_HOST
+    sync: false
+  - &id007
+    key: EMAIL_PORT
+    value: '587'
+  - key: EMAIL_HOST_USER
+    sync: false
+  - key: EMAIL_HOST_PASSWORD
+    sync: false
+  - &id008
+    key: EMAIL_USE_TLS
+    value: 'True'
+  - key: DEFAULT_FROM_EMAIL
+    sync: false
+- type: keyvalue
+  name: talentbridge-cache
+  region: frankfurt
+  plan: free
+  ipAllowList: []
+  maxmemoryPolicy: allkeys-lru
+- type: cron
+  name: talentbridge-notifications
+  runtime: docker
+  region: frankfurt
+  plan: 0.5c-512mb
+  branch: main
+  repo: https://github.com/donfitex/talent-bridge
+  schedule: '*/5 * * * *'
+  dockerCommand: sh -c "python manage.py queue_interview_reminders && python manage.py
+    dispatch_notifications"
+  envVars:
+  - *id001
+  - key: DJANGO_SECRET_KEY
+    fromService:
+      type: web
+      name: talentbridge-web
+      envVarKey: DJANGO_SECRET_KEY
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id006
+  - key: EMAIL_HOST
+    fromService:
+      type: web
+      name: talentbridge-web
+      envVarKey: EMAIL_HOST
+  - *id007
+  - key: EMAIL_HOST_USER
+    fromService:
+      type: web
+      name: talentbridge-web
+      envVarKey: EMAIL_HOST_USER
+  - key: EMAIL_HOST_PASSWORD
+    fromService:
+      type: web
+      name: talentbridge-web
+      envVarKey: EMAIL_HOST_PASSWORD
+  - *id008
+  - key: DEFAULT_FROM_EMAIL
+    fromService:
+      type: web
+      name: talentbridge-web
+      envVarKey: DEFAULT_FROM_EMAIL
+databases:
+- name: talentbridge-db
+  region: frankfurt
+  plan: 0.1c-256mb
+  diskSizeGB: 1
+  postgresMajorVersion: '16'
+  databaseName: talentbridge
+  user: talentbridge
+  ipAllowList: []

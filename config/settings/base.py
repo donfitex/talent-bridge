@@ -230,3 +230,11 @@ SPECTACULAR_SETTINGS["ENUM_NAME_OVERRIDES"] = {
     "ApplicationStatusEnum": "apps.applications.models.ApplicationStatus.choices",
     "JobStatusEnum": "apps.jobs.models.JobStatus.choices",
 }
+
+SPECTACULAR_SETTINGS["POSTPROCESSING_HOOKS"] = [
+    "drf_spectacular.hooks.postprocess_schema_enums",
+    "apps.common.schema.envelope_responses",
+]
+
+EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
+EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)

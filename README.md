@@ -1,85 +1,65 @@
-# TalentBridge — Job Discovery, Recruitment & Applicant Tracking Platform
+# TalentBridge
 
-TalentBridge is an enterprise-grade, production-ready recruitment and applicant tracking platform built with Django, Django REST Framework, and PostgreSQL. It bridges the gap between ambitious companies and skilled job seekers through high-efficiency job matching, verified credentials, role-based workflows, and automated candidate tracking.
+A Django recruitment platform with job discovery, company hiring workspaces,
+private resumes, applicant tracking, interviews and email/in-app notifications.
 
----
+## Run locally
 
-## Key Features
+Python 3.12+ is required. In a virtual environment:
 
-- **Multi-Role Authentication**: Dedicated workflows and access control for Candidates, Employers, Recruiters, and Admins.
-- **Company & Employer Management**: Company profiles, verified status badges, recruiter assignments, and organization membership.
-- **Job Taxonomy & Categorization**: Granular skills tagging, industry categories, and search-friendly attributes.
-- **Advanced Job Search & Discovery**: Flexible filtering by keywords, location, remote work options, salary range, and experience levels.
-- **Secure Resume Handling**: Strict file-type validation, size restrictions, private storage outside static directories, and authorized download endpoints.
-- **Applicant Tracking System (ATS)**: Complete candidate application pipeline (Submitted, Under Review, Shortlisted, Interview, Offer, Hired, Rejected).
-- **Recruitment Audit Trail**: Tamper-evident status history tracking every transition and reviewer.
-- **Real-Time Notifications & Alerts**: Candidate status alerts and employer application activity notifications.
-- **Interview Scheduling**: Coordinated calendar invites for in-person, phone, and video interviews.
-- **Analytics & Reporting**: Conversion metrics, time-to-hire statistics, application velocity, and administrative oversight.
-- **Enterprise Security**: Production-grade CSRF protection, secure cookie handling, rate limiting, and object-level permissions.
+```sh
+pip install -r requirements-dev.txt
+# Copy .env.example to .env and set local values.
+python manage.py migrate
+python manage.py seed_categories
+python manage.py runserver
+```
 
----
+Open http://localhost:8000/. Register a candidate to upload a resume and apply, or
+an employer to create a company and publish vacancies. Set FRONTEND_URL to the
+same origin for verification and reset links. Development email appears in the
+server console. Create administration access with `python manage.py createsuperuser`.
+No default administrator credentials are included.
 
-## Architecture Overview
+## Implemented workflows
 
-TalentBridge follows a modular monolithic architecture adhering strictly to SOLID principles:
-- **`apps/common`**: Shared core models, base viewsets, standardized response envelopes, and custom permission classes.
-- **`apps/users`**: Custom user identity, authentication, role management, and security policies.
-- **`apps/companies`**: Corporate profiles, verification pipelines, and recruiter memberships.
-- **`apps/jobs`**: Job catalog, categories, skills mapping, and listings.
-- **`apps/candidates`**: Candidate profiles, preferences, and saved bookmarks.
-- **`apps/resumes`**: Encrypted/protected resume uploads and permissioned document retrieval.
-- **`apps/applications`**: Full lifecycle applicant tracking system with status state machine.
-- **`apps/interviews`**: Multi-round interview coordination and outcome logging.
-- **`apps/notifications`**: Multi-channel in-app and email notification dispatchers.
-- **`apps/reports`**: Business intelligence, recruitment analytics, and metrics aggregation.
+- Search, filter and paginate published jobs; responsive job/detail pages.
+- Candidate signup, session login, profile, password recovery and email verification.
+- Private PDF/DOCX uploads with validation and permission-checked downloads.
+- Transactional submission, duplicate prevention, withdrawal and reapplication.
+- Company-scoped employer/recruiter pipeline, safe CSV exports and status history.
+- Interview scheduling with candidate/interviewer overlap checks and private feedback.
+- Durable notification outbox, retryable delivery, in-app inbox and reminder commands.
+- Employer reports and searchable Django administration.
+- CSRF, tenant permissions, shared-cache rate limits and production settings checks.
+- Health endpoints, OpenAPI, Docker/Gunicorn, GitHub Actions and Render Blueprint.
 
----
+## Verify
 
-## Getting Started
+```sh
+ruff check .
+ruff format --check .
+pytest
+coverage run -m pytest
+coverage report --fail-under=70
+```
 
-### Prerequisites
+SQLite is used by the fast test configuration. Real PostgreSQL concurrency and
+migration instructions are in [testing](docs/testing.md). CI uses PostgreSQL and
+builds the Docker image. Runtime readiness is at `/health/`; liveness is at
+`/health/live/`. Interactive API docs are at `/api/docs/`.
 
-- Python 3.11+
-- PostgreSQL 15+ (or Docker)
-- Git
+## Documentation
 
-### Installation
+- [Architecture and scaling](docs/architecture.md)
+- [API and authentication](docs/api.md)
+- [Development](docs/development.md)
+- [Tests and concurrency](docs/testing.md)
+- [Security and private media](docs/security.md)
+- [Render/Docker deployment and recovery](docs/deployment.md)
+- [Delivery progress](docs/PROGRESS.md)
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/donfitex/talent-bridge.git
-   cd talent-bridge
-   ```
-
-2. **Set up virtual environment**:
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
-
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements-dev.txt
-   ```
-
-4. **Environment Configuration**:
-   ```bash
-   cp .env.example .env
-   # Update environment variables in .env
-   ```
-
-5. **Run migrations & start development server**:
-   ```bash
-   python manage.py migrate
-   python manage.py runserver
-   ```
-
----
-
-## Coding Conventions
-
-- **PEP 8 & Formatting**: Enforced via `ruff check` and `ruff format`.
-- **Typing**: Type annotations on business logic services and serializers.
-- **SOLID Design**: Separation of concerns between Django models, DRF serializers, service layers, and viewsets.
-- **Commit Standards**: Conventional Commits standard (`feat:`, `chore:`, `test:`, `docs:`, `perf:`).
+The repository adapts the supplied engineering plan to recruitment. Event seat
+capacity and waitlists are replaced with application duplicate protection and
+interview scheduling. Production deployment and external email delivery require
+hosting secrets and verification; see the release audit for actual evidence.

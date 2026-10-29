@@ -77,3 +77,6 @@ if render_hostname:
     CSRF_TRUSTED_ORIGINS.append(f"https://{render_hostname}")
     FRONTEND_URL = env("RENDER_EXTERNAL_URL", default=f"https://{render_hostname}")
 MEDIA_ROOT = env("PUBLIC_MEDIA_ROOT", default=str(BASE_DIR / "media"))
+
+LOGGING["formatters"]["json"] = {"()": "apps.common.logging.JSONFormatter"}  # noqa: F405
+LOGGING["handlers"]["console"]["formatter"] = "json"  # noqa: F405
