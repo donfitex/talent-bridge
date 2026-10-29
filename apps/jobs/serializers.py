@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import transaction
 from apps.jobs.models import JobCategory, Skill, Job, JobSkill, JobStatus
 
 
@@ -97,14 +98,21 @@ class JobSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, attrs):
-        salary_min = attrs.get("salary_min")
-        salary_max = attrs.get("salary_max")
+        salary_min = attrs.get("salary_min", getattr(self.instance, "salary_min", None))
+        salary_max = attrs.get("salary_max", getattr(self.instance, "salary_max", None))
+        for value in [salary_min, salary_max]:
+            if value is not None and value < 0:
+                raise serializers.ValidationError("Salary must be nonnegative.")
+        skill_ids = attrs.get("skill_ids", [])
+        if len(set(skill_ids)) != len(skill_ids) or Skill.objects.filter(pk__in=skill_ids).count() != len(skill_ids):
+            raise serializers.ValidationError({"skill_ids": "Supply unique existing skill IDs."})
         if salary_min is not None and salary_max is not None and salary_min > salary_max:
             raise serializers.ValidationError({
                 "salary_min": "Minimum salary cannot exceed maximum salary."
             })
         return attrs
 
+    @transaction.atomic
     def create(self, validated_data):
         skill_ids = validated_data.pop("skill_ids", [])
         job = Job.objects.create(**validated_data)
@@ -116,6 +124,7 @@ class JobSerializer(serializers.ModelSerializer):
                 pass
         return job
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         skill_ids = validated_data.pop("skill_ids", None)
         job = super().update(instance, validated_data)

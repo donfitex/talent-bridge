@@ -1,4 +1,6 @@
 from django.contrib.auth import login, logout
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
 from rest_framework import status, views, permissions
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema, OpenApiResponse
@@ -58,6 +60,7 @@ class EmployerRegistrationView(views.APIView):
         )
 
 
+@method_decorator(csrf_protect, name="dispatch")
 class LoginView(views.APIView):
     """Authenticates credentials and establishes session."""
     permission_classes = [permissions.AllowAny]

@@ -42,6 +42,8 @@ class EmployerJobViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         job = self.get_object()
         JobManagementService.verify_employer_permission(self.request.user, job.company)
+        company = serializer.validated_data.get("company", job.company)
+        JobManagementService.verify_employer_permission(self.request.user, company)
         serializer.save()
 
     @decorators.action(detail=True, methods=["post"])
@@ -74,7 +76,10 @@ class EmployerJobViewSet(viewsets.ModelViewSet):
     @decorators.action(detail=True, methods=["post"])
     def reopen(self, request, id=None):
         job = self.get_object()
+        from rest_framework import serializers
         deadline = request.data.get("application_deadline")
+        if deadline is not None:
+            deadline = serializers.DateTimeField().run_validation(deadline)
         updated_job = JobManagementService.reopen_job(job, request.user, deadline)
         return APIResponse(
             data=JobSerializer(updated_job).data,

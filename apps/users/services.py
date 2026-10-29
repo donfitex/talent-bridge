@@ -6,6 +6,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.conf import settings
 from apps.users.models import User, UserRole
+from apps.users.tokens import email_verification_token
 
 logger = logging.getLogger("apps.users")
 
@@ -31,7 +32,7 @@ class UserService:
     @staticmethod
     def send_email_verification(user: User) -> bool:
         """Sends an email verification link to user."""
-        token = default_token_generator.make_token(user)
+        token = email_verification_token.make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         verification_link = f"{settings.FRONTEND_URL}/verify-email/?uid={uid}&token={token}"
 
@@ -53,11 +54,11 @@ class UserService:
         """Validates verification token and activates email verification status."""
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid)
+            user = User.objects.get(pk=uid, is_active=True)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return False
 
-        if default_token_generator.check_token(user, token):
+        if email_verification_token.check_token(user, token):
             user.is_email_verified = True
             user.save(update_fields=["is_email_verified"])
             return True
@@ -94,7 +95,7 @@ class UserService:
         """Resets user password after token verification."""
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            user = User.objects.get(pk=uid)
+            user = User.objects.get(pk=uid, is_active=True)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return False
 

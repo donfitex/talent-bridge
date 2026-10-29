@@ -5,6 +5,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema
 
 from apps.common.responses import APIResponse
+from apps.common.permissions import IsCandidateUser
+from django.db.models.deletion import ProtectedError
 from apps.common.exceptions import TalentBridgeAPIException
 from apps.candidates.models import CandidateProfile
 from apps.resumes.models import Resume
@@ -73,7 +75,18 @@ class ResumeViewSet(viewsets.ModelViewSet):
         if not resume.file or not resume.file.storage.exists(resume.file.name):
             raise Http404("Resume file not found on storage server.")
 
-        response = FileResponse(resume.file.open("rb"), content_type=resume.file_type)
-        response["Content-Disposition"] = f'attachment; filename="{resume.original_filename}"'
+        response = FileResponse(resume.file.open("rb"), content_type=resume.file_type, as_attachment=True, filename=resume.original_filename)
+        response["Cache-Control"] = "private, no-store"
         response["X-Content-Type-Options"] = "nosniff"
         return response
+
+    def get_permissions(self):
+        if self.action == "download":
+            return [permissions.IsAuthenticated()]
+        return [IsCandidateUser()]
+
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except ProtectedError:
+            raise TalentBridgeAPIException(detail="A submitted application references this resume.", code="RESUME_IN_USE", status_code=409) from None

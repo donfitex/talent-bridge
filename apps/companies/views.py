@@ -4,6 +4,8 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiResponse
 
 from apps.common.responses import APIResponse
+from apps.common.permissions import IsEmployerUser
+from django.db import transaction
 from apps.common.exceptions import TalentBridgeAPIException
 from apps.users.models import User, UserRole
 from apps.companies.models import Company, EmployerMembership, EmployerRole
@@ -27,9 +29,12 @@ class CompanyViewSet(viewsets.ModelViewSet):
         if self.action in ["list", "retrieve"]:
             return [permissions.AllowAny()]
         if self.action == "create":
-            return [permissions.IsAuthenticated()]
+            return [IsEmployerUser()]
+        if self.action == "members":
+            return [permissions.IsAuthenticated(), IsCompanyMember()]
         return [permissions.IsAuthenticated(), IsCompanyAdminOrOwner()]
 
+    @transaction.atomic
     def perform_create(self, serializer):
         company = serializer.save()
         # Automatically make creator the OWNER of this company
@@ -87,6 +92,8 @@ class CompanyViewSet(viewsets.ModelViewSet):
             defaults={"role": role, "is_active": True},
         )
         if not created:
+            if membership.role == EmployerRole.OWNER:
+                raise TalentBridgeAPIException(detail="Owner membership cannot be reassigned.", status_code=409)
             if not membership.is_active:
                 membership.is_active = True
                 membership.role = role
@@ -116,7 +123,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
         company = self.get_object()
         membership = get_object_or_404(EmployerMembership, id=member_id, company=company)
 
-        if membership.role == EmployerRole.OWNER and membership.user == request.user:
+        if membership.role == EmployerRole.OWNER:
             raise TalentBridgeAPIException(
                 detail="Company owners cannot remove themselves from their own company.",
                 code="CANNOT_REMOVE_OWNER",

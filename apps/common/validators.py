@@ -29,7 +29,8 @@ def validate_resume_file(value):
         )
 
     # Validate file size
-    validate_file_size(value, max_mb=5)
+    from django.conf import settings
+    validate_file_size(value, max_mb=settings.MAX_RESUME_SIZE_MB)
 
     # Validate file contents signature
     initial_pos = value.tell()
@@ -41,3 +42,20 @@ def validate_resume_file(value):
         raise ValidationError(_("The uploaded file does not match a valid PDF file structure."))
     elif ext == ".docx" and not header.startswith(DOCX_MAGIC_BYTES):
         raise ValidationError(_("The uploaded file does not match a valid DOCX file structure."))
+
+    if ext == ".docx":
+        from zipfile import ZipFile, BadZipFile
+        try:
+            value.seek(0)
+            with ZipFile(value) as archive:
+                names = set(archive.namelist())
+                if not {"[Content_Types].xml", "word/document.xml"}.issubset(names):
+                    raise ValidationError("The file is not a Word document.")
+                if any(info.file_size > 25 * 1024 * 1024 for info in archive.infolist()):
+                    raise ValidationError("Document contains oversized entries.")
+                if "word/vbaProject.bin" in names:
+                    raise ValidationError("Macro-enabled documents are not accepted.")
+        except BadZipFile:
+            raise ValidationError("Invalid Word document archive.") from None
+        finally:
+            value.seek(initial_pos)

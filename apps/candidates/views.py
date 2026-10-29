@@ -16,7 +16,7 @@ class CurrentCandidateProfileView(views.APIView):
     Candidate endpoint to retrieve and update own candidate profile.
     Automatically initializes profile if it does not exist yet.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsCandidateUser]
 
     @extend_schema(responses={200: CandidateProfileSerializer})
     def get(self, request):
@@ -49,8 +49,11 @@ class CandidateDetailView(views.APIView):
             serializer = CandidateProfileSerializer(profile)
             return APIResponse(data=serializer.data)
 
+        if not profile.is_public:
+            from django.http import Http404
+            raise Http404
         # Otherwise check if contact info is allowed or public view
-        if profile.is_contact_visible:
+        if profile.is_contact_visible and (request.user.is_employer or request.user.is_recruiter) and request.user.employer_memberships.filter(is_active=True, company__verification_status="VERIFIED").exists():
             serializer = CandidateProfileSerializer(profile)
         else:
             serializer = PublicCandidateProfileSerializer(profile)

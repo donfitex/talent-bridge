@@ -32,6 +32,13 @@ def custom_exception_handler(exc, context):
         }
     }
     """
+    from django.core.exceptions import ValidationError as DjangoValidationError
+    from django.db.models.deletion import ProtectedError
+    from rest_framework.exceptions import ValidationError
+    if isinstance(exc, DjangoValidationError):
+        exc = ValidationError(getattr(exc, "message_dict", None) or exc.messages)
+    if isinstance(exc, ProtectedError):
+        exc = TalentBridgeAPIException(detail="This record is referenced by protected data.", code="RESOURCE_IN_USE", status_code=409)
     response = exception_handler(exc, context)
 
     if response is not None:

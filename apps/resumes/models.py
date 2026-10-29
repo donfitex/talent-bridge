@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from apps.common.models import UUIDTimeStampedModel
+from apps.resumes.storage import PrivateResumeStorage
 from apps.common.validators import validate_resume_file
 from apps.candidates.models import CandidateProfile
 
@@ -29,6 +30,7 @@ class Resume(UUIDTimeStampedModel):
     file = models.FileField(
         _("resume file"),
         upload_to=resume_upload_path,
+        storage=PrivateResumeStorage(),
         validators=[validate_resume_file],
     )
     original_filename = models.CharField(_("original filename"), max_length=255)

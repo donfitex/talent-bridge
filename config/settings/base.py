@@ -204,3 +204,14 @@ LOGGING = {
 
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
+
+AUTH_RATE_LIMIT = env.int("AUTH_RATE_LIMIT", default=30)
+MIDDLEWARE.insert(3, "apps.common.security.AuthenticationRateLimitMiddleware")
+REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = ["rest_framework.authentication.SessionAuthentication"]
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = ["rest_framework.throttling.AnonRateThrottle", "rest_framework.throttling.UserRateThrottle"]
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {"anon": "120/min", "user": "600/min"}
+DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"

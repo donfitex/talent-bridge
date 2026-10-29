@@ -1,10 +1,18 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+@ensure_csrf_cookie
+def csrf_token_view(request):
+    return JsonResponse({"data": {"csrf": "Cookie set"}})
+
 from apps.jobs.views import JobCategoryListView, SkillListView
 
 from apps.reports.views import RecruitmentReportView
 
 urlpatterns = [
+    path("api/v1/auth/csrf/", csrf_token_view),
     path("", include("apps.common.web_urls")),
     path("api/v1/notifications/", include("apps.notifications.urls")),
     path("api/v1/interviews/", include("apps.interviews.urls")),
