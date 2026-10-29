@@ -88,18 +88,15 @@ class ApplicationSubmissionService:
         ApplicationStatusHistory.objects.create(application=application, actor=user, status=application.status)
 
         # Trigger notification hook asynchronously/safely
-        transaction.on_commit(lambda: ApplicationSubmissionService._notify_employer_on_application(application))
+        ApplicationSubmissionService._notify_employer_on_application(application)
 
         return application
 
     @staticmethod
     def _notify_employer_on_application(application: JobApplication):
         """Notification dispatch decoupled from core application creation."""
-        try:
-            from apps.notifications.services import NotificationService
-            NotificationService.notify_employer_new_application(application)
-        except Exception as e:
-            logger.warning("Notification delivery queued or deferred for application %s: %s", application.id, e)
+        from apps.notifications.services import NotificationService
+        NotificationService.notify_employer_new_application(application)
 
 
 class ApplicationWithdrawalService:
@@ -118,7 +115,7 @@ class ApplicationWithdrawalService:
         application.withdrawn_at = timezone.now()
         application.save(update_fields=["status", "withdrawn_at", "updated_at"])
         ApplicationStatusHistory.objects.create(application=application, actor=user, previous_status=previous, status=application.status)
-        transaction.on_commit(lambda: ApplicationSubmissionService._notify_employer_on_application(application))
+        ApplicationSubmissionService._notify_employer_on_application(application)
         return application
 
 
@@ -146,5 +143,5 @@ class ApplicationTransitionService:
         application.save(update_fields=["status", "updated_at"])
         ApplicationStatusHistory.objects.create(application=application, actor=user,
             previous_status=previous, status=target, note=note)
-        transaction.on_commit(lambda: ApplicationSubmissionService._notify_employer_on_application(application))
+        ApplicationSubmissionService._notify_employer_on_application(application)
         return application
