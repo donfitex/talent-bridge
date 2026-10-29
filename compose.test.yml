@@ -1,0 +1,14 @@
+services:
+  test-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: talentbridge_test
+      POSTGRES_USER: talentbridge_test
+      POSTGRES_PASSWORD: local-test-only
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U talentbridge_test -d talentbridge_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 20

@@ -73,3 +73,7 @@ venv.bak/
 
 # Ruff cache
 .ruff_cache/
+
+# Local verification artifacts
+tmp/
+.local/
