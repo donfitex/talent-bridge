@@ -6,3 +6,5 @@ from rest_framework.test import APIClient
 def api_client():
     """Returns an unauthenticated DRF APIClient."""
     return APIClient()
+
+from tests.test_applications import recruitment  # noqa: F401

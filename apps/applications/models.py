@@ -77,3 +77,19 @@ class JobApplication(UUIDTimeStampedModel):
     @property
     def is_active(self) -> bool:
         return self.status not in [ApplicationStatus.WITHDRAWN, ApplicationStatus.REJECTED]
+
+
+class ApplicationStatusHistory(UUIDTimeStampedModel):
+    application = models.ForeignKey(JobApplication, on_delete=models.CASCADE, related_name="history")
+    actor = models.ForeignKey("users.User", null=True, on_delete=models.SET_NULL)
+    previous_status = models.CharField(max_length=20, blank=True)
+    status = models.CharField(max_length=20, choices=ApplicationStatus.choices)
+    note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise ValueError("Application history is append-only.")
+        super().save(*args, **kwargs)

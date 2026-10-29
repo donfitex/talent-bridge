@@ -65,3 +65,20 @@ def test_deadline_and_hired_withdrawal(api_client, recruitment):
     Job.objects.filter(pk=job.pk).update(application_deadline=timezone.now()-timedelta(seconds=1))
     with pytest.raises(Exception, match='expired'):
         ApplicationSubmissionService.submit_application(candidate, job.id, resume.id)
+
+
+def test_employer_pipeline_and_history(api_client, recruitment):
+    from apps.applications.models import ApplicationStatusHistory
+    candidate, employer, job, resume = recruitment
+    application = ApplicationSubmissionService.submit_application(candidate, job.id, resume.id)
+    api_client.force_authenticate(employer)
+    url = f"/api/v1/employer/applications/{application.pk}/transition/"
+    assert api_client.post(url, {"status": "HIRED"}).status_code == 409
+    for target in ["UNDER_REVIEW", "SHORTLISTED", "INTERVIEW", "OFFERED", "HIRED"]:
+        assert api_client.post(url, {"status": target}).status_code == 200
+    assert ApplicationStatusHistory.objects.filter(application=application).count() == 6
+    assert api_client.get('/api/v1/employer/applications/export/').status_code == 200
+    stranger = User.objects.create_user("other-employer@example.com", role="EMPLOYER")
+    api_client.force_authenticate(stranger)
+    assert api_client.post(url, {"status": "REJECTED"}).status_code == 404
+    assert api_client.get(f"/api/v1/employer/applications/{application.pk}/").status_code == 404

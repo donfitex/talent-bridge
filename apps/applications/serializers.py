@@ -47,3 +47,16 @@ class JobApplicationSerializer(serializers.ModelSerializer):
 
     def get_resume_url(self, obj) -> str:
         return f"/api/v1/resumes/{obj.resume_id}/download/"
+
+
+class StatusTransitionSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(choices=ApplicationStatus.choices)
+    note = serializers.CharField(required=False, allow_blank=True, max_length=5000)
+
+
+class EmployerApplicationSerializer(JobApplicationSerializer):
+    candidate_name = serializers.CharField(source="candidate.user.get_full_name", read_only=True)
+    candidate_email = serializers.EmailField(source="candidate.user.email", read_only=True)
+
+    class Meta(JobApplicationSerializer.Meta):
+        fields = JobApplicationSerializer.Meta.fields + ["candidate_name", "candidate_email"]

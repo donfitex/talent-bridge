@@ -6,7 +6,7 @@ from apps.users.models import User
 from apps.candidates.models import CandidateProfile
 from apps.jobs.models import Job, JobStatus
 from apps.resumes.models import Resume
-from apps.applications.models import JobApplication, ApplicationStatus
+from apps.applications.models import JobApplication, ApplicationStatus, ApplicationStatusHistory
 
 logger = logging.getLogger("apps.applications")
 
@@ -85,6 +85,8 @@ class ApplicationSubmissionService:
         except IntegrityError:
             raise TalentBridgeAPIException(detail="You already applied for this job.", code="DUPLICATE_APPLICATION", status_code=409) from None
 
+        ApplicationStatusHistory.objects.create(application=application, actor=user, status=application.status)
+
         # Trigger notification hook asynchronously/safely
         transaction.on_commit(lambda: ApplicationSubmissionService._notify_employer_on_application(application))
 
@@ -111,7 +113,38 @@ class ApplicationWithdrawalService:
             raise TalentBridgeAPIException(detail="Application not found.", code="NOT_FOUND", status_code=404) from None
         if application.status in {ApplicationStatus.WITHDRAWN, ApplicationStatus.HIRED, ApplicationStatus.REJECTED}:
             raise TalentBridgeAPIException(detail="This application cannot be withdrawn.", code="INVALID_TRANSITION", status_code=409)
+        previous = application.status
         application.status = ApplicationStatus.WITHDRAWN
         application.withdrawn_at = timezone.now()
         application.save(update_fields=["status", "withdrawn_at", "updated_at"])
+        ApplicationStatusHistory.objects.create(application=application, actor=user, previous_status=previous, status=application.status)
+        transaction.on_commit(lambda: ApplicationSubmissionService._notify_employer_on_application(application))
+        return application
+
+
+class ApplicationTransitionService:
+    transitions = {
+        ApplicationStatus.SUBMITTED: {ApplicationStatus.UNDER_REVIEW, ApplicationStatus.REJECTED},
+        ApplicationStatus.UNDER_REVIEW: {ApplicationStatus.SHORTLISTED, ApplicationStatus.REJECTED},
+        ApplicationStatus.SHORTLISTED: {ApplicationStatus.INTERVIEW, ApplicationStatus.REJECTED},
+        ApplicationStatus.INTERVIEW: {ApplicationStatus.OFFERED, ApplicationStatus.REJECTED},
+        ApplicationStatus.OFFERED: {ApplicationStatus.HIRED, ApplicationStatus.REJECTED},
+    }
+
+    @staticmethod
+    @transaction.atomic
+    def transition(user, application_id, target, note=""):
+        from apps.applications.access import employer_applications
+        allowed = employer_applications(user).filter(pk=application_id).exists()
+        if not allowed or not (user.is_employer or user.is_recruiter or user.is_admin_user):
+            raise TalentBridgeAPIException(detail="Application not found.", code="NOT_FOUND", status_code=404)
+        application = JobApplication.objects.select_for_update().get(pk=application_id)
+        previous = application.status
+        if target not in ApplicationTransitionService.transitions.get(previous, set()):
+            raise TalentBridgeAPIException(detail="Invalid application status transition.", code="INVALID_TRANSITION", status_code=409)
+        application.status = target
+        application.save(update_fields=["status", "updated_at"])
+        ApplicationStatusHistory.objects.create(application=application, actor=user,
+            previous_status=previous, status=target, note=note)
+        transaction.on_commit(lambda: ApplicationSubmissionService._notify_employer_on_application(application))
         return application
