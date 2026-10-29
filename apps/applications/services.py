@@ -1,12 +1,14 @@
 import logging
+
+from django.db import IntegrityError, transaction
 from django.utils import timezone
-from django.db import transaction, IntegrityError
-from apps.common.exceptions import TalentBridgeAPIException
-from apps.users.models import User
+
+from apps.applications.models import ApplicationStatus, ApplicationStatusHistory, JobApplication
 from apps.candidates.models import CandidateProfile
+from apps.common.exceptions import TalentBridgeAPIException
 from apps.jobs.models import Job, JobStatus
 from apps.resumes.models import Resume
-from apps.applications.models import JobApplication, ApplicationStatus, ApplicationStatusHistory
+from apps.users.models import User
 
 logger = logging.getLogger("apps.applications")
 
@@ -28,7 +30,9 @@ class ApplicationSubmissionService:
             )
 
         if not user.is_candidate:
-            raise TalentBridgeAPIException(detail="Only candidates can apply.", code="CANDIDATE_REQUIRED", status_code=403)
+            raise TalentBridgeAPIException(
+                detail="Only candidates can apply.", code="CANDIDATE_REQUIRED", status_code=403
+            )
 
         candidate, _ = CandidateProfile.objects.get_or_create(user=user)
         CandidateProfile.objects.select_for_update().get(pk=candidate.pk)
@@ -36,7 +40,9 @@ class ApplicationSubmissionService:
         try:
             job = Job.objects.select_for_update().get(id=job_id)
         except Job.DoesNotExist:
-            raise TalentBridgeAPIException(detail="Job listing not found.", code="JOB_NOT_FOUND", status_code=404)
+            raise TalentBridgeAPIException(
+                detail="Job listing not found.", code="JOB_NOT_FOUND", status_code=404
+            ) from None
 
         if not job.is_accepting_applications:
             if job.status != JobStatus.PUBLISHED:
@@ -53,10 +59,14 @@ class ApplicationSubmissionService:
                 )
 
         # Check for existing active application
-        existing_app = JobApplication.objects.filter(
-            job=job,
-            candidate=candidate,
-        ).exclude(status=ApplicationStatus.WITHDRAWN).first()
+        existing_app = (
+            JobApplication.objects.filter(
+                job=job,
+                candidate=candidate,
+            )
+            .exclude(status=ApplicationStatus.WITHDRAWN)
+            .first()
+        )
 
         if existing_app:
             raise TalentBridgeAPIException(
@@ -73,19 +83,28 @@ class ApplicationSubmissionService:
                 detail="The selected resume does not exist or does not belong to your account.",
                 code="INVALID_RESUME",
                 status_code=400,
-            )
+            ) from None
 
         # Create the application
         try:
             with transaction.atomic():
                 application = JobApplication.objects.create(
-                    job=job, candidate=candidate, resume=resume, cover_letter=cover_letter,
+                    job=job,
+                    candidate=candidate,
+                    resume=resume,
+                    cover_letter=cover_letter,
                     status=ApplicationStatus.SUBMITTED,
                 )
         except IntegrityError:
-            raise TalentBridgeAPIException(detail="You already applied for this job.", code="DUPLICATE_APPLICATION", status_code=409) from None
+            raise TalentBridgeAPIException(
+                detail="You already applied for this job.",
+                code="DUPLICATE_APPLICATION",
+                status_code=409,
+            ) from None
 
-        ApplicationStatusHistory.objects.create(application=application, actor=user, status=application.status)
+        ApplicationStatusHistory.objects.create(
+            application=application, actor=user, status=application.status
+        )
 
         # Trigger notification hook asynchronously/safely
         ApplicationSubmissionService._notify_employer_on_application(application)
@@ -96,6 +115,7 @@ class ApplicationSubmissionService:
     def _notify_employer_on_application(application: JobApplication):
         """Notification dispatch decoupled from core application creation."""
         from apps.notifications.services import NotificationService
+
         NotificationService.notify_employer_new_application(application)
 
 
@@ -105,16 +125,29 @@ class ApplicationWithdrawalService:
     def withdraw(user, application_id):
         try:
             application = JobApplication.objects.select_for_update().get(
-                pk=application_id, candidate__user=user)
+                pk=application_id, candidate__user=user
+            )
         except JobApplication.DoesNotExist:
-            raise TalentBridgeAPIException(detail="Application not found.", code="NOT_FOUND", status_code=404) from None
-        if application.status in {ApplicationStatus.WITHDRAWN, ApplicationStatus.HIRED, ApplicationStatus.REJECTED}:
-            raise TalentBridgeAPIException(detail="This application cannot be withdrawn.", code="INVALID_TRANSITION", status_code=409)
+            raise TalentBridgeAPIException(
+                detail="Application not found.", code="NOT_FOUND", status_code=404
+            ) from None
+        if application.status in {
+            ApplicationStatus.WITHDRAWN,
+            ApplicationStatus.HIRED,
+            ApplicationStatus.REJECTED,
+        }:
+            raise TalentBridgeAPIException(
+                detail="This application cannot be withdrawn.",
+                code="INVALID_TRANSITION",
+                status_code=409,
+            )
         previous = application.status
         application.status = ApplicationStatus.WITHDRAWN
         application.withdrawn_at = timezone.now()
         application.save(update_fields=["status", "withdrawn_at", "updated_at"])
-        ApplicationStatusHistory.objects.create(application=application, actor=user, previous_status=previous, status=application.status)
+        ApplicationStatusHistory.objects.create(
+            application=application, actor=user, previous_status=previous, status=application.status
+        )
         ApplicationSubmissionService._notify_employer_on_application(application)
         return application
 
@@ -132,16 +165,24 @@ class ApplicationTransitionService:
     @transaction.atomic
     def transition(user, application_id, target, note=""):
         from apps.applications.access import employer_applications
+
         allowed = employer_applications(user).filter(pk=application_id).exists()
         if not allowed or not (user.is_employer or user.is_recruiter or user.is_admin_user):
-            raise TalentBridgeAPIException(detail="Application not found.", code="NOT_FOUND", status_code=404)
+            raise TalentBridgeAPIException(
+                detail="Application not found.", code="NOT_FOUND", status_code=404
+            )
         application = JobApplication.objects.select_for_update().get(pk=application_id)
         previous = application.status
         if target not in ApplicationTransitionService.transitions.get(previous, set()):
-            raise TalentBridgeAPIException(detail="Invalid application status transition.", code="INVALID_TRANSITION", status_code=409)
+            raise TalentBridgeAPIException(
+                detail="Invalid application status transition.",
+                code="INVALID_TRANSITION",
+                status_code=409,
+            )
         application.status = target
         application.save(update_fields=["status", "updated_at"])
-        ApplicationStatusHistory.objects.create(application=application, actor=user,
-            previous_status=previous, status=target, note=note)
+        ApplicationStatusHistory.objects.create(
+            application=application, actor=user, previous_status=previous, status=target, note=note
+        )
         ApplicationSubmissionService._notify_employer_on_application(application)
         return application

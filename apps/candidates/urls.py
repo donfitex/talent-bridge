@@ -1,8 +1,9 @@
 from django.urls import path
+
 from apps.candidates.views import (
-    CurrentCandidateProfileView,
     CandidateDetailView,
     CandidateListView,
+    CurrentCandidateProfileView,
 )
 
 urlpatterns = [

@@ -1,7 +1,7 @@
-import uuid
-from django.db import models
 from django.conf import settings
+from django.db import models
 from django.utils.translation import gettext_lazy as _
+
 from apps.common.models import UUIDTimeStampedModel
 
 
@@ -26,12 +26,15 @@ class CandidateProfile(UUIDTimeStampedModel):
     Candidate professional profile linked one-to-one to a User account.
     Includes privacy controls and profile completeness tracking.
     """
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name="candidate_profile",
     )
-    professional_title = models.CharField(_("professional title"), max_length=200, blank=True, db_index=True)
+    professional_title = models.CharField(
+        _("professional title"), max_length=200, blank=True, db_index=True
+    )
     biography = models.TextField(_("biography"), blank=True)
     location = models.CharField(_("location"), max_length=255, blank=True)
     country = models.CharField(_("country"), max_length=100, blank=True, db_index=True)
@@ -60,7 +63,9 @@ class CandidateProfile(UUIDTimeStampedModel):
     is_contact_visible = models.BooleanField(
         _("is contact details visible to verified employers"),
         default=False,
-        help_text=_("Allow verified employers to directly see phone number before application submission."),
+        help_text=_(
+            "Allow verified employers to directly see phone number before application submission."
+        ),
     )
 
     class Meta:
@@ -95,6 +100,7 @@ class CandidateSkill(UUIDTimeStampedModel):
     """
     Skill possessed by a candidate with self-reported years of experience.
     """
+
     candidate = models.ForeignKey(
         CandidateProfile,
         on_delete=models.CASCADE,

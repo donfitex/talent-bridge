@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from apps.users.models import User, UserRole
+
 from apps.companies.models import Company, EmployerMembership, EmployerRole
 
 

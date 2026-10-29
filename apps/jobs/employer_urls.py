@@ -1,4 +1,5 @@
 from rest_framework.routers import DefaultRouter
+
 from apps.jobs.employer_views import EmployerJobViewSet
 
 router = DefaultRouter()

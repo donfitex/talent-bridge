@@ -1,14 +1,14 @@
-from rest_framework import views, generics, permissions, status
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
+from rest_framework import generics, permissions, views
 
-from apps.common.responses import APIResponse
-from apps.common.permissions import IsCandidateUser
 from apps.candidates.models import CandidateProfile
 from apps.candidates.serializers import (
     CandidateProfileSerializer,
     PublicCandidateProfileSerializer,
 )
+from apps.common.permissions import IsCandidateUser
+from apps.common.responses import APIResponse
 
 
 class CurrentCandidateProfileView(views.APIView):
@@ -16,6 +16,7 @@ class CurrentCandidateProfileView(views.APIView):
     Candidate endpoint to retrieve and update own candidate profile.
     Automatically initializes profile if it does not exist yet.
     """
+
     permission_classes = [IsCandidateUser]
 
     @extend_schema(responses={200: CandidateProfileSerializer})
@@ -38,6 +39,7 @@ class CandidateDetailView(views.APIView):
     Endpoint for viewing candidate details.
     Enforces privacy rules: hides phone and private data unless authorized.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(responses={200: CandidateProfileSerializer})
@@ -51,9 +53,16 @@ class CandidateDetailView(views.APIView):
 
         if not profile.is_public:
             from django.http import Http404
+
             raise Http404
         # Otherwise check if contact info is allowed or public view
-        if profile.is_contact_visible and (request.user.is_employer or request.user.is_recruiter) and request.user.employer_memberships.filter(is_active=True, company__verification_status="VERIFIED").exists():
+        if (
+            profile.is_contact_visible
+            and (request.user.is_employer or request.user.is_recruiter)
+            and request.user.employer_memberships.filter(
+                is_active=True, company__verification_status="VERIFIED"
+            ).exists()
+        ):
             serializer = CandidateProfileSerializer(profile)
         else:
             serializer = PublicCandidateProfileSerializer(profile)
@@ -65,11 +74,14 @@ class CandidateListView(generics.ListAPIView):
     """
     Endpoint for searching and listing public candidates.
     """
+
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PublicCandidateProfileSerializer
 
     def get_queryset(self):
-        qs = CandidateProfile.objects.filter(is_public=True, user__is_active=True).select_related("user")
+        qs = CandidateProfile.objects.filter(is_public=True, user__is_active=True).select_related(
+            "user"
+        )
         title = self.request.query_params.get("title")
         country = self.request.query_params.get("country")
         if title:

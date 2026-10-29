@@ -1,4 +1,5 @@
 import os
+
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 
@@ -13,7 +14,9 @@ def validate_file_size(value, max_mb=5):
     limit = max_mb * 1024 * 1024
     if filesize > limit:
         raise ValidationError(
-            _(f"The maximum file size allowed is {max_mb} MB. Uploaded file size is {filesize / (1024 * 1024):.2f} MB.")
+            _(
+                f"The maximum file size allowed is {max_mb} MB. Uploaded file size is {filesize / (1024 * 1024):.2f} MB."
+            )
         )
 
 
@@ -25,11 +28,14 @@ def validate_resume_file(value):
     ext = os.path.splitext(value.name)[1].lower()
     if ext not in ALLOWED_RESUME_EXTENSIONS:
         raise ValidationError(
-            _(f"Unsupported file format '{ext}'. Only PDF (.pdf) and Microsoft Word (.docx) documents are allowed.")
+            _(
+                f"Unsupported file format '{ext}'. Only PDF (.pdf) and Microsoft Word (.docx) documents are allowed."
+            )
         )
 
     # Validate file size
     from django.conf import settings
+
     validate_file_size(value, max_mb=settings.MAX_RESUME_SIZE_MB)
 
     # Validate file contents signature
@@ -44,7 +50,8 @@ def validate_resume_file(value):
         raise ValidationError(_("The uploaded file does not match a valid DOCX file structure."))
 
     if ext == ".docx":
-        from zipfile import ZipFile, BadZipFile
+        from zipfile import BadZipFile, ZipFile
+
         try:
             value.seek(0)
             with ZipFile(value) as archive:

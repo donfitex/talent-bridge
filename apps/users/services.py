@@ -1,11 +1,12 @@
 import logging
-from django.contrib.auth import authenticate, login, logout
+
+from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.conf import settings
-from apps.users.models import User, UserRole
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+
+from apps.users.models import User
 from apps.users.tokens import email_verification_token
 
 logger = logging.getLogger("apps.users")
@@ -15,7 +16,9 @@ class UserService:
     """Service layer handling user lifecycle, authentication, and security workflows."""
 
     @staticmethod
-    def register_user(email: str, password: str, role: str, first_name: str = "", last_name: str = "") -> User:
+    def register_user(
+        email: str, password: str, role: str, first_name: str = "", last_name: str = ""
+    ) -> User:
         """Creates a new user and generates initial activation / verification state."""
         user = User.objects.create_user(
             email=email,

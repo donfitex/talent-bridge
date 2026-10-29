@@ -1,14 +1,14 @@
+from django.db.models.deletion import ProtectedError
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets, permissions, status, decorators
-from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema
+from rest_framework import decorators, permissions, status, viewsets
+from rest_framework.parsers import FormParser, MultiPartParser
 
-from apps.common.responses import APIResponse
-from apps.common.permissions import IsCandidateUser
-from django.db.models.deletion import ProtectedError
-from apps.common.exceptions import TalentBridgeAPIException
 from apps.candidates.models import CandidateProfile
+from apps.common.exceptions import TalentBridgeAPIException
+from apps.common.permissions import IsCandidateUser
+from apps.common.responses import APIResponse
 from apps.resumes.models import Resume
 from apps.resumes.serializers import ResumeSerializer, ResumeUploadSerializer
 from apps.resumes.services import ResumeService
@@ -18,6 +18,7 @@ class ResumeViewSet(viewsets.ModelViewSet):
     """
     Candidate resume management and secure file handling endpoint.
     """
+
     serializer_class = ResumeSerializer
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [permissions.IsAuthenticated]
@@ -75,7 +76,12 @@ class ResumeViewSet(viewsets.ModelViewSet):
         if not resume.file or not resume.file.storage.exists(resume.file.name):
             raise Http404("Resume file not found on storage server.")
 
-        response = FileResponse(resume.file.open("rb"), content_type=resume.file_type, as_attachment=True, filename=resume.original_filename)
+        response = FileResponse(
+            resume.file.open("rb"),
+            content_type=resume.file_type,
+            as_attachment=True,
+            filename=resume.original_filename,
+        )
         response["Cache-Control"] = "private, no-store"
         response["X-Content-Type-Options"] = "nosniff"
         return response
@@ -89,4 +95,8 @@ class ResumeViewSet(viewsets.ModelViewSet):
         try:
             instance.delete()
         except ProtectedError:
-            raise TalentBridgeAPIException(detail="A submitted application references this resume.", code="RESUME_IN_USE", status_code=409) from None
+            raise TalentBridgeAPIException(
+                detail="A submitted application references this resume.",
+                code="RESUME_IN_USE",
+                status_code=409,
+            ) from None

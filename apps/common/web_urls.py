@@ -1,13 +1,28 @@
-from django.urls import path
 from django.contrib.auth import views as auth_views
+from django.urls import path
+
 from apps.common import web_views as v
 from apps.common.web_forms import EmailLoginForm
+
 urlpatterns = [
-    path("", v.jobs, name="web-home"), path("jobs/", v.jobs, name="web-jobs"),
+    path("dashboard/", v.dashboard),
+    path("accounts/password/reset/", v.password_request, name="web-password-request"),
+    path("reset-password/", v.password_reset),
+    path("verify-email/", v.verify_email),
+    path("", v.jobs, name="web-home"),
+    path("jobs/", v.jobs, name="web-jobs"),
     path("jobs/<uuid:pk>/", v.job_detail, name="web-job-detail"),
     path("jobs/<uuid:pk>/apply/", v.apply, name="web-apply"),
     path("companies/", v.companies, name="web-companies"),
-    path("accounts/login/", auth_views.LoginView.as_view(template_name="web/form.html", authentication_form=EmailLoginForm, extra_context={"title": "Welcome back"}), name="web-login"),
+    path(
+        "accounts/login/",
+        auth_views.LoginView.as_view(
+            template_name="web/form.html",
+            authentication_form=EmailLoginForm,
+            extra_context={"title": "Welcome back"},
+        ),
+        name="web-login",
+    ),
     path("accounts/logout/", v.signout, name="web-logout"),
     path("accounts/register/", v.register, name="web-register"),
     path("candidate/dashboard/", v.candidate_dashboard, name="web-candidate"),

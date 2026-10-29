@@ -1,5 +1,9 @@
+import hashlib
+
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *  # noqa: F403
-from .base import env
+from .base import BASE_DIR, env
 
 DEBUG = False
 
@@ -7,9 +11,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS")
 
 # Database: Expects PostgreSQL in production
-DATABASES = {
-    "default": env.db("DATABASE_URL")
-}
+DATABASES = {"default": env.db("DATABASE_URL")}
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
 
 # HTTPS and Security Headers
@@ -47,3 +49,31 @@ LOGGING["handlers"]["console"]["level"] = "INFO"  # noqa: F405
 LOGGING["root"]["level"] = "INFO"  # noqa: F405
 LOGGING["loggers"]["django"]["level"] = "INFO"  # noqa: F405
 LOGGING["loggers"]["apps"]["level"] = "INFO"  # noqa: F405
+
+
+if len(SECRET_KEY) < 40 or "insecure" in SECRET_KEY or "change-me" in SECRET_KEY:
+    raise ImproperlyConfigured(
+        "Production requires a strong DJANGO_SECRET_KEY of at least 40 characters."
+    )
+if DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql":
+    raise ImproperlyConfigured("Production requires PostgreSQL DATABASE_URL.")
+if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS:
+    raise ImproperlyConfigured("Production requires explicit DJANGO_ALLOWED_HOSTS.")
+CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": env("REDIS_URL", default="redis://redis:6379/1"),
+    }
+}
+
+SECURE_REDIRECT_EXEMPT = [r"^health/live/$"]
+
+# Expand high-entropy platform-generated keys to Django's preferred key length.
+SECRET_KEY = hashlib.sha256(SECRET_KEY.encode()).hexdigest()
+render_hostname = env("RENDER_EXTERNAL_HOSTNAME", default="")
+if render_hostname:
+    ALLOWED_HOSTS.append(render_hostname)
+    CSRF_TRUSTED_ORIGINS.append(f"https://{render_hostname}")
+    FRONTEND_URL = env("RENDER_EXTERNAL_URL", default=f"https://{render_hostname}")
+MEDIA_ROOT = env("PUBLIC_MEDIA_ROOT", default=str(BASE_DIR / "media"))

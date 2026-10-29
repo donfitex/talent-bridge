@@ -1,10 +1,10 @@
-from typing import Optional
-from django.utils import timezone
 from django.db import transaction
+from django.utils import timezone
+
 from apps.common.exceptions import TalentBridgeAPIException
-from apps.users.models import User
 from apps.companies.models import Company, EmployerMembership
-from apps.jobs.models import Job, JobStatus, JobSkill
+from apps.jobs.models import Job, JobSkill, JobStatus
+from apps.users.models import User
 
 
 class JobManagementService:
@@ -30,7 +30,7 @@ class JobManagementService:
                 detail="You do not have authorization to manage job listings for this company.",
                 code="UNAUTHORIZED_COMPANY_ACCESS",
                 status_code=403,
-            )
+            ) from None
 
     @staticmethod
     def publish_job(job: Job, user: User) -> Job:
@@ -69,7 +69,7 @@ class JobManagementService:
         return job
 
     @staticmethod
-    def reopen_job(job: Job, user: User, new_deadline: Optional[timezone.datetime] = None) -> Job:
+    def reopen_job(job: Job, user: User, new_deadline: timezone.datetime | None = None) -> Job:
         JobManagementService.verify_employer_permission(user, job.company)
         if new_deadline:
             if new_deadline <= timezone.now():

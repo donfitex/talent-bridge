@@ -1,5 +1,6 @@
 from django.utils import timezone
 from rest_framework import decorators, permissions, serializers, viewsets
+
 from apps.common.responses import APIResponse
 from apps.notifications.models import Notification
 
@@ -16,6 +17,8 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Notification.objects.none()
         return Notification.objects.filter(user=self.request.user)
 
     @decorators.action(detail=True, methods=["post"])

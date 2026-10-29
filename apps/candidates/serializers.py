@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from apps.candidates.models import CandidateProfile
 
 
@@ -32,6 +33,7 @@ class CandidateProfileSerializer(serializers.ModelSerializer):
 
 class PublicCandidateProfileSerializer(serializers.ModelSerializer):
     """Sanitized view of a candidate profile protecting private contact details."""
+
     full_name = serializers.CharField(source="user.get_full_name", read_only=True)
     completeness_score = serializers.IntegerField(read_only=True)
 
@@ -57,6 +59,7 @@ class CandidateSkillSerializer(serializers.ModelSerializer):
 
     class Meta:
         from apps.candidates.models import CandidateSkill
+
         model = CandidateSkill
         fields = ["id", "skill", "skill_name", "years_of_experience"]
         read_only_fields = ["id"]

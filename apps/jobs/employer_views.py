@@ -1,12 +1,9 @@
-from rest_framework import viewsets, permissions, status, decorators
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema
+from rest_framework import decorators, permissions, status, viewsets
 
-from apps.common.responses import APIResponse
 from apps.common.permissions import IsEmployerUser
+from apps.common.responses import APIResponse
 from apps.companies.models import EmployerMembership
-from apps.jobs.models import Job, JobStatus
+from apps.jobs.models import Job
 from apps.jobs.serializers import JobSerializer
 from apps.jobs.services import JobManagementService
 
@@ -15,18 +12,25 @@ class EmployerJobViewSet(viewsets.ModelViewSet):
     """
     Dedicated viewset for employers and recruiters to manage company vacancies.
     """
+
     serializer_class = JobSerializer
     permission_classes = [permissions.IsAuthenticated, IsEmployerUser]
     lookup_field = "id"
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Job.objects.none()
         user = self.request.user
         if user.is_staff or getattr(user, "is_admin_user", False):
-            return Job.objects.all().select_related("company", "category").prefetch_related("job_skills__skill")
+            return (
+                Job.objects.all()
+                .select_related("company", "category")
+                .prefetch_related("job_skills__skill")
+            )
 
-        company_ids = EmployerMembership.objects.filter(
-            user=user, is_active=True
-        ).values_list("company_id", flat=True)
+        company_ids = EmployerMembership.objects.filter(user=user, is_active=True).values_list(
+            "company_id", flat=True
+        )
 
         return (
             Job.objects.filter(company_id__in=company_ids)
@@ -77,6 +81,7 @@ class EmployerJobViewSet(viewsets.ModelViewSet):
     def reopen(self, request, id=None):
         job = self.get_object()
         from rest_framework import serializers
+
         deadline = request.data.get("application_deadline")
         if deadline is not None:
             deadline = serializers.DateTimeField().run_validation(deadline)

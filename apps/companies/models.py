@@ -1,8 +1,8 @@
-import uuid
+from django.conf import settings
 from django.db import models
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
-from django.conf import settings
+
 from apps.common.models import UUIDTimeStampedModel
 
 
@@ -27,6 +27,7 @@ class Company(UUIDTimeStampedModel):
     """
     Organization profile representing an employer hiring on TalentBridge.
     """
+
     name = models.CharField(_("company name"), max_length=255, db_index=True)
     slug = models.SlugField(_("slug"), max_length=255, unique=True, db_index=True)
     description = models.TextField(_("description"), blank=True)
@@ -89,6 +90,7 @@ class EmployerMembership(UUIDTimeStampedModel):
     Membership association linking a User to a Company with designated roles.
     Supports multi-recruiter teams per company.
     """
+
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

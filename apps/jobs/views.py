@@ -1,11 +1,12 @@
-from rest_framework import generics, viewsets, permissions, filters
-from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, generics, permissions, viewsets
+
 from apps.common.responses import APIResponse
-from apps.jobs.models import JobCategory, Skill, Job, JobStatus
-from apps.jobs.serializers import JobCategorySerializer, SkillSerializer, JobSerializer
 from apps.jobs.filters import JobFilter
+from apps.jobs.models import Job, JobCategory, JobStatus, Skill
+from apps.jobs.serializers import JobCategorySerializer, JobSerializer, SkillSerializer
 
 
 class JobCategoryListView(generics.ListCreateAPIView):
@@ -13,6 +14,7 @@ class JobCategoryListView(generics.ListCreateAPIView):
     GET /api/v1/job-categories/
     List active job categories.
     """
+
     queryset = JobCategory.objects.filter(is_active=True).prefetch_related("skills")
     serializer_class = JobCategorySerializer
 
@@ -31,6 +33,7 @@ class SkillListView(generics.ListCreateAPIView):
     GET /api/v1/skills/
     Search and list skills taxonomy.
     """
+
     serializer_class = SkillSerializer
 
     def get_permissions(self):
@@ -59,6 +62,7 @@ class PublicJobViewSet(viewsets.ReadOnlyModelViewSet):
     GET /api/v1/jobs/
     GET /api/v1/jobs/{id}/
     """
+
     serializer_class = JobSerializer
     permission_classes = [permissions.AllowAny]
     lookup_field = "id"

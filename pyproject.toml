@@ -3,7 +3,7 @@ name = "talent-bridge"
 version = "0.1.0"
 description = "Production-Ready Job Discovery, Recruitment & Applicant Tracking Platform"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 authors = [
     { name = "TalentBridge Team" }
 ]

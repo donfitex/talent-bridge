@@ -1,15 +1,16 @@
 from django.urls import path
+
 from apps.users.views import (
     CandidateRegistrationView,
+    CurrentUserProfileView,
+    DeactivateAccountView,
+    EmailVerificationView,
     EmployerRegistrationView,
     LoginView,
     LogoutView,
-    CurrentUserProfileView,
     PasswordChangeView,
-    PasswordResetRequestView,
     PasswordResetConfirmView,
-    EmailVerificationView,
-    DeactivateAccountView,
+    PasswordResetRequestView,
 )
 
 urlpatterns = [
@@ -20,7 +21,11 @@ urlpatterns = [
     path("me/", CurrentUserProfileView.as_view(), name="auth-me"),
     path("password/change/", PasswordChangeView.as_view(), name="auth-password-change"),
     path("password/reset/", PasswordResetRequestView.as_view(), name="auth-password-reset"),
-    path("password/reset/confirm/", PasswordResetConfirmView.as_view(), name="auth-password-reset-confirm"),
+    path(
+        "password/reset/confirm/",
+        PasswordResetConfirmView.as_view(),
+        name="auth-password-reset-confirm",
+    ),
     path("verify-email/", EmailVerificationView.as_view(), name="auth-verify-email"),
     path("deactivate/", DeactivateAccountView.as_view(), name="auth-deactivate"),
 ]

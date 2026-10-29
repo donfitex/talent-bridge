@@ -1,11 +1,10 @@
-import os
 import mimetypes
-from django.conf import settings
-from apps.common.exceptions import TalentBridgeAPIException
-from apps.common.validators import validate_resume_file
-from apps.users.models import User
+import os
+
 from apps.candidates.models import CandidateProfile
+from apps.common.validators import validate_resume_file
 from apps.resumes.models import Resume
+from apps.users.models import User
 
 
 class ResumeService:
@@ -15,11 +14,13 @@ class ResumeService:
     """
 
     @staticmethod
-    def upload_resume(candidate: CandidateProfile, file_obj, title: str, is_default: bool = False) -> Resume:
+    def upload_resume(
+        candidate: CandidateProfile, file_obj, title: str, is_default: bool = False
+    ) -> Resume:
         # Validate file format and magic bytes
         validate_resume_file(file_obj)
 
-        ext = os.path.splitext(file_obj.name)[1].lower()
+        os.path.splitext(file_obj.name)[1].lower()
         content_type = mimetypes.guess_type(file_obj.name)[0] or "application/octet-stream"
 
         if is_default:
@@ -58,6 +59,7 @@ class ResumeService:
 
         # Check if user is an employer member of a company where the candidate applied with this resume
         from apps.companies.models import EmployerMembership
+
         employer_companies = EmployerMembership.objects.filter(
             user=user, is_active=True
         ).values_list("company_id", flat=True)
@@ -67,6 +69,7 @@ class ResumeService:
 
         try:
             from apps.applications.models import JobApplication
+
             return JobApplication.objects.filter(
                 job__company_id__in=employer_companies,
                 candidate=resume.candidate,

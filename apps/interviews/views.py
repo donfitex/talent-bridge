@@ -1,4 +1,5 @@
 from rest_framework import permissions, serializers, viewsets
+
 from apps.applications.access import employer_applications
 from apps.common.permissions import IsEmployerUser
 from apps.interviews.models import Interview
@@ -8,7 +9,17 @@ from apps.interviews.services import InterviewService
 class InterviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Interview
-        fields = ["id", "application", "interviewer", "starts_at", "ends_at", "location", "status", "feedback", "created_at"]
+        fields = [
+            "id",
+            "application",
+            "interviewer",
+            "starts_at",
+            "ends_at",
+            "location",
+            "status",
+            "feedback",
+            "created_at",
+        ]
         read_only_fields = ["id", "created_at"]
 
 
@@ -23,7 +34,11 @@ class InterviewViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "patch", "head", "options"]
 
     def get_serializer_class(self):
-        return CandidateInterviewSerializer if self.request.user.is_candidate else InterviewSerializer
+        return (
+            CandidateInterviewSerializer
+            if getattr(self.request.user, "is_candidate", False)
+            else InterviewSerializer
+        )
 
     def get_permissions(self):
         if self.action in {"create", "partial_update"}:
@@ -31,8 +46,10 @@ class InterviewViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return Interview.objects.none()
         qs = Interview.objects.select_related("application__job", "interviewer")
-        if self.request.user.is_candidate:
+        if getattr(self.request.user, "is_candidate", False):
             return qs.filter(application__candidate__user=self.request.user)
         return qs.filter(application__in=employer_applications(self.request.user))
 
@@ -45,4 +62,6 @@ class InterviewViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         if set(serializer.validated_data) - {"status", "feedback"}:
             raise serializers.ValidationError("Cancel and create a new interview to reschedule.")
-        serializer.instance = InterviewService.update(self.request.user, self.get_object(), serializer.validated_data)
+        serializer.instance = InterviewService.update(
+            self.request.user, self.get_object(), serializer.validated_data
+        )

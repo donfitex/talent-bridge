@@ -1,10 +1,9 @@
-import uuid
 from django.db import models
-from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+from apps.candidates.models import CandidateProfile
 from apps.common.models import UUIDTimeStampedModel
 from apps.jobs.models import Job
-from apps.candidates.models import CandidateProfile
 from apps.resumes.models import Resume
 
 
@@ -24,6 +23,7 @@ class JobApplication(UUIDTimeStampedModel):
     Connects a CandidateProfile and a Job listing with resume snapshot,
     cover letter, lifecycle status, and withdrawal timestamps.
     """
+
     job = models.ForeignKey(
         Job,
         on_delete=models.CASCADE,
@@ -80,7 +80,9 @@ class JobApplication(UUIDTimeStampedModel):
 
 
 class ApplicationStatusHistory(UUIDTimeStampedModel):
-    application = models.ForeignKey(JobApplication, on_delete=models.CASCADE, related_name="history")
+    application = models.ForeignKey(
+        JobApplication, on_delete=models.CASCADE, related_name="history"
+    )
     actor = models.ForeignKey("users.User", null=True, on_delete=models.SET_NULL)
     previous_status = models.CharField(max_length=20, blank=True)
     status = models.CharField(max_length=20, choices=ApplicationStatus.choices)

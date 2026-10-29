@@ -1,26 +1,26 @@
-from rest_framework import viewsets, permissions, status, decorators
-from rest_framework.response import Response
-from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema, OpenApiResponse
-
-from apps.common.responses import APIResponse
-from apps.common.permissions import IsEmployerUser
 from django.db import transaction
+from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
+from rest_framework import decorators, permissions, status, viewsets
+
 from apps.common.exceptions import TalentBridgeAPIException
-from apps.users.models import User, UserRole
+from apps.common.permissions import IsEmployerUser
+from apps.common.responses import APIResponse
 from apps.companies.models import Company, EmployerMembership, EmployerRole
+from apps.companies.permissions import IsCompanyAdminOrOwner, IsCompanyMember
 from apps.companies.serializers import (
+    AssignRecruiterSerializer,
     CompanySerializer,
     EmployerMembershipSerializer,
-    AssignRecruiterSerializer,
 )
-from apps.companies.permissions import IsCompanyMember, IsCompanyAdminOrOwner
+from apps.users.models import User, UserRole
 
 
 class CompanyViewSet(viewsets.ModelViewSet):
     """
     CRUD API for Company Profiles and Employer Memberships.
     """
+
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
     lookup_field = "id"
@@ -84,7 +84,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
             raise TalentBridgeAPIException(
                 detail=f"User with email '{email}' does not exist. They must register first.",
                 code="USER_NOT_FOUND",
-            )
+            ) from None
 
         membership, created = EmployerMembership.objects.get_or_create(
             user=target_user,
@@ -93,7 +93,9 @@ class CompanyViewSet(viewsets.ModelViewSet):
         )
         if not created:
             if membership.role == EmployerRole.OWNER:
-                raise TalentBridgeAPIException(detail="Owner membership cannot be reassigned.", status_code=409)
+                raise TalentBridgeAPIException(
+                    detail="Owner membership cannot be reassigned.", status_code=409
+                )
             if not membership.is_active:
                 membership.is_active = True
                 membership.role = role
@@ -113,6 +115,9 @@ class CompanyViewSet(viewsets.ModelViewSet):
             message=f"Recruiter {email} successfully assigned to {company.name}.",
         )
 
+    @extend_schema(
+        parameters=[OpenApiParameter("member_id", OpenApiTypes.UUID, OpenApiParameter.PATH)]
+    )
     @decorators.action(
         detail=True,
         methods=["delete"],

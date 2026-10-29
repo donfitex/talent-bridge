@@ -3,6 +3,7 @@ from rest_framework import permissions
 
 class IsCandidateUser(permissions.BasePermission):
     """Allows access only to candidate users."""
+
     def has_permission(self, request, view):
         return bool(
             request.user
@@ -13,6 +14,7 @@ class IsCandidateUser(permissions.BasePermission):
 
 class IsEmployerUser(permissions.BasePermission):
     """Allows access only to employer / recruiter users."""
+
     def has_permission(self, request, view):
         return bool(
             request.user
@@ -27,6 +29,7 @@ class IsEmployerUser(permissions.BasePermission):
 
 class IsOwnerOrAdmin(permissions.BasePermission):
     """Allows access only to the object owner or staff/admin."""
+
     def has_object_permission(self, request, view, obj):
         if request.user.is_staff or getattr(request.user, "is_admin_user", False):
             return True

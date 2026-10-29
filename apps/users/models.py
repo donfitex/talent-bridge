@@ -1,8 +1,10 @@
 import uuid
+
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
 from apps.common.models import TimeStampedModel
 
 
@@ -48,6 +50,7 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     Custom user model for TalentBridge platform.
     Uses email as the unique identifier and supports multiple operational roles.
     """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(_("email address"), unique=True, db_index=True)
     first_name = models.CharField(_("first name"), max_length=150, blank=True)

@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from apps.applications.models import JobApplication, ApplicationStatus
-from apps.jobs.serializers import JobSerializer
-from apps.resumes.serializers import ResumeSerializer
+
+from apps.applications.models import ApplicationStatus, JobApplication
 
 
 class ApplicationSubmissionSerializer(serializers.Serializer):
@@ -10,11 +9,24 @@ class ApplicationSubmissionSerializer(serializers.Serializer):
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):
+    applied_at = serializers.DateTimeField(source="created_at", read_only=True)
     job_title = serializers.CharField(source="job.title", read_only=True)
     company_name = serializers.CharField(source="job.company.name", read_only=True)
     company_slug = serializers.CharField(source="job.company.slug", read_only=True)
     resume_title = serializers.CharField(source="resume.title", read_only=True)
     resume_url = serializers.SerializerMethodField()
+
+    history = serializers.SerializerMethodField()
+
+    def get_history(self, obj) -> list[dict]:
+        return [
+            {
+                "previous_status": item.previous_status,
+                "status": item.status,
+                "created_at": item.created_at,
+            }
+            for item in obj.history.all()
+        ]
 
     class Meta:
         model = JobApplication
@@ -32,6 +44,7 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             "applied_at",
             "updated_at",
             "withdrawn_at",
+            "history",
         ]
         read_only_fields = [
             "id",
@@ -43,6 +56,7 @@ class JobApplicationSerializer(serializers.ModelSerializer):
             "applied_at",
             "updated_at",
             "withdrawn_at",
+            "history",
         ]
 
     def get_resume_url(self, obj) -> str:

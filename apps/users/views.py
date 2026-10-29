@@ -1,27 +1,28 @@
 from django.contrib.auth import login, logout
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
-from rest_framework import status, views, permissions
-from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema, OpenApiResponse
+from drf_spectacular.utils import OpenApiResponse, extend_schema
+from rest_framework import permissions, status, views
 
-from apps.common.responses import APIResponse
 from apps.common.exceptions import TalentBridgeAPIException
+from apps.common.responses import APIResponse
 from apps.users.models import UserRole
-from apps.users.services import UserService
 from apps.users.serializers import (
-    UserRegistrationSerializer,
+    EmailVerificationSerializer,
+    EmptyRequestSerializer,
+    PasswordChangeSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
     UserLoginSerializer,
     UserProfileSerializer,
-    PasswordChangeSerializer,
-    PasswordResetRequestSerializer,
-    PasswordResetConfirmSerializer,
-    EmailVerificationSerializer,
+    UserRegistrationSerializer,
 )
+from apps.users.services import UserService
 
 
 class CandidateRegistrationView(views.APIView):
     """Public endpoint for registering a candidate user account."""
+
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
@@ -30,7 +31,9 @@ class CandidateRegistrationView(views.APIView):
         description="Register a new Candidate user account.",
     )
     def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data, context={"role": UserRole.CANDIDATE})
+        serializer = UserRegistrationSerializer(
+            data=request.data, context={"role": UserRole.CANDIDATE}
+        )
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         return APIResponse(
@@ -42,6 +45,7 @@ class CandidateRegistrationView(views.APIView):
 
 class EmployerRegistrationView(views.APIView):
     """Public endpoint for registering an employer user account."""
+
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
@@ -50,7 +54,9 @@ class EmployerRegistrationView(views.APIView):
         description="Register a new Employer user account.",
     )
     def post(self, request):
-        serializer = UserRegistrationSerializer(data=request.data, context={"role": UserRole.EMPLOYER})
+        serializer = UserRegistrationSerializer(
+            data=request.data, context={"role": UserRole.EMPLOYER}
+        )
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         return APIResponse(
@@ -63,6 +69,7 @@ class EmployerRegistrationView(views.APIView):
 @method_decorator(csrf_protect, name="dispatch")
 class LoginView(views.APIView):
     """Authenticates credentials and establishes session."""
+
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(
@@ -82,7 +89,9 @@ class LoginView(views.APIView):
 
 
 class LogoutView(views.APIView):
+    serializer_class = EmptyRequestSerializer
     """Terminates authenticated session."""
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(responses={200: OpenApiResponse(description="Logged out successfully")})
@@ -93,6 +102,7 @@ class LogoutView(views.APIView):
 
 class CurrentUserProfileView(views.APIView):
     """Returns or updates current authenticated user profile."""
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(responses={200: UserProfileSerializer})
@@ -110,6 +120,7 @@ class CurrentUserProfileView(views.APIView):
 
 class PasswordChangeView(views.APIView):
     """Allows authenticated user to change password."""
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(request=PasswordChangeSerializer, responses={200: OpenApiResponse()})
@@ -122,6 +133,7 @@ class PasswordChangeView(views.APIView):
 
 class PasswordResetRequestView(views.APIView):
     """Dispatches password reset email token."""
+
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(request=PasswordResetRequestSerializer, responses={200: OpenApiResponse()})
@@ -137,6 +149,7 @@ class PasswordResetRequestView(views.APIView):
 
 class PasswordResetConfirmView(views.APIView):
     """Sets new password using reset token."""
+
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(request=PasswordResetConfirmSerializer, responses={200: OpenApiResponse()})
@@ -153,11 +166,14 @@ class PasswordResetConfirmView(views.APIView):
                 detail="The password reset link is invalid or has expired.",
                 code="INVALID_RESET_TOKEN",
             )
-        return APIResponse(data={}, message="Password has been reset successfully. You may now log in.")
+        return APIResponse(
+            data={}, message="Password has been reset successfully. You may now log in."
+        )
 
 
 class EmailVerificationView(views.APIView):
     """Verifies account email address."""
+
     permission_classes = [permissions.AllowAny]
 
     @extend_schema(request=EmailVerificationSerializer, responses={200: OpenApiResponse()})
@@ -177,7 +193,9 @@ class EmailVerificationView(views.APIView):
 
 
 class DeactivateAccountView(views.APIView):
+    serializer_class = EmptyRequestSerializer
     """Allows user to deactivate their account."""
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(responses={200: OpenApiResponse()})

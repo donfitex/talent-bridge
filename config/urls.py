@@ -1,17 +1,24 @@
 from django.contrib import admin
-from django.urls import path, include
 from django.http import JsonResponse
+from django.urls import include, path
 from django.views.decorators.csrf import ensure_csrf_cookie
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+
+from apps.common.health import live, ready
+from apps.jobs.views import JobCategoryListView, SkillListView
+from apps.reports.views import RecruitmentReportView
+
 
 @ensure_csrf_cookie
 def csrf_token_view(request):
     return JsonResponse({"data": {"csrf": "Cookie set"}})
 
-from apps.jobs.views import JobCategoryListView, SkillListView
-
-from apps.reports.views import RecruitmentReportView
 
 urlpatterns = [
+    path("health/live/", live),
+    path("health/", ready),
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/v1/auth/csrf/", csrf_token_view),
     path("", include("apps.common.web_urls")),
     path("api/v1/notifications/", include("apps.notifications.urls")),

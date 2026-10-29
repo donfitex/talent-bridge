@@ -1,6 +1,7 @@
-from rest_framework import serializers
 from django.db import transaction
-from apps.jobs.models import JobCategory, Skill, Job, JobSkill, JobStatus
+from rest_framework import serializers
+
+from apps.jobs.models import Job, JobCategory, JobSkill, Skill
 
 
 class JobCategorySerializer(serializers.ModelSerializer):
@@ -8,7 +9,16 @@ class JobCategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = JobCategory
-        fields = ["id", "name", "slug", "description", "icon", "is_active", "skills_count", "created_at"]
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "description",
+            "icon",
+            "is_active",
+            "skills_count",
+            "created_at",
+        ]
         read_only_fields = ["id", "slug", "created_at"]
 
     def get_skills_count(self, obj) -> int:
@@ -104,12 +114,14 @@ class JobSerializer(serializers.ModelSerializer):
             if value is not None and value < 0:
                 raise serializers.ValidationError("Salary must be nonnegative.")
         skill_ids = attrs.get("skill_ids", [])
-        if len(set(skill_ids)) != len(skill_ids) or Skill.objects.filter(pk__in=skill_ids).count() != len(skill_ids):
+        if len(set(skill_ids)) != len(skill_ids) or Skill.objects.filter(
+            pk__in=skill_ids
+        ).count() != len(skill_ids):
             raise serializers.ValidationError({"skill_ids": "Supply unique existing skill IDs."})
         if salary_min is not None and salary_max is not None and salary_min > salary_max:
-            raise serializers.ValidationError({
-                "salary_min": "Minimum salary cannot exceed maximum salary."
-            })
+            raise serializers.ValidationError(
+                {"salary_min": "Minimum salary cannot exceed maximum salary."}
+            )
         return attrs
 
     @transaction.atomic

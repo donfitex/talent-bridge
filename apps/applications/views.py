@@ -1,12 +1,12 @@
-from rest_framework import views, permissions, status
 from drf_spectacular.utils import extend_schema
+from rest_framework import permissions, status, views
 
-from apps.common.responses import APIResponse
-from apps.applications.services import ApplicationSubmissionService
 from apps.applications.serializers import (
     ApplicationSubmissionSerializer,
     JobApplicationSerializer,
 )
+from apps.applications.services import ApplicationSubmissionService
+from apps.common.responses import APIResponse
 
 
 class JobApplicationSubmissionView(views.APIView):
@@ -14,6 +14,7 @@ class JobApplicationSubmissionView(views.APIView):
     POST /api/v1/jobs/{id}/apply/
     Allows an authenticated candidate to apply for a published vacancy.
     """
+
     permission_classes = [permissions.IsAuthenticated]
 
     @extend_schema(

@@ -1,10 +1,13 @@
 from django.conf import settings
 from django.db import models
+
 from apps.common.models import UUIDTimeStampedModel
 
 
 class Notification(UUIDTimeStampedModel):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications"
+    )
     subject = models.CharField(max_length=255)
     message = models.TextField()
     deduplication_key = models.CharField(max_length=255, unique=True)

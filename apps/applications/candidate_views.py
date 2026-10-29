@@ -1,12 +1,10 @@
-from django.utils import timezone
-from rest_framework import viewsets, permissions, status, decorators
 from drf_spectacular.utils import extend_schema
+from rest_framework import decorators, permissions, viewsets
 
-from apps.common.responses import APIResponse
-from apps.common.permissions import IsCandidateUser
-from apps.common.exceptions import TalentBridgeAPIException
-from apps.applications.models import JobApplication, ApplicationStatus
+from apps.applications.models import ApplicationStatus, JobApplication
 from apps.applications.serializers import JobApplicationSerializer
+from apps.common.permissions import IsCandidateUser
+from apps.common.responses import APIResponse
 
 
 class CandidateApplicationViewSet(viewsets.ReadOnlyModelViewSet):
@@ -16,6 +14,7 @@ class CandidateApplicationViewSet(viewsets.ReadOnlyModelViewSet):
     GET /api/v1/applications/{id}/
     POST /api/v1/applications/{id}/withdraw/
     """
+
     serializer_class = JobApplicationSerializer
     permission_classes = [permissions.IsAuthenticated, IsCandidateUser]
     lookup_field = "id"
@@ -28,6 +27,7 @@ class CandidateApplicationViewSet(viewsets.ReadOnlyModelViewSet):
         qs = (
             JobApplication.objects.filter(candidate=user.candidate_profile)
             .select_related("job", "job__company", "resume")
+            .prefetch_related("history")
             .order_by("-created_at")
         )
 
@@ -43,6 +43,7 @@ class CandidateApplicationViewSet(viewsets.ReadOnlyModelViewSet):
         application = self.get_object()
 
         from apps.applications.services import ApplicationWithdrawalService
+
         application = ApplicationWithdrawalService.withdraw(request.user, application.pk)
 
         return APIResponse(

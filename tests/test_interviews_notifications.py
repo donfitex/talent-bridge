@@ -1,12 +1,13 @@
 from datetime import timedelta
+
 import pytest
-from django.utils import timezone
 from django.core import mail
-from django.core.management import call_command
+from django.utils import timezone
+
 from apps.applications.services import ApplicationSubmissionService, ApplicationTransitionService
+from apps.interviews.models import Interview
 from apps.notifications.models import Notification
 from apps.notifications.services import NotificationService
-from apps.interviews.models import Interview
 
 pytestmark = pytest.mark.django_db
 
@@ -18,20 +19,28 @@ def test_scheduling_overlap_privacy_and_cancellation(api_client, recruitment):
         ApplicationTransitionService.transition(employer, application.pk, target)
     api_client.force_authenticate(employer)
     start = timezone.now() + timedelta(hours=2)
-    data = {"application": str(application.pk), "interviewer": str(employer.pk),
-        "starts_at": start.isoformat(), "ends_at": (start+timedelta(hours=1)).isoformat(), "location": "Lagos office"}
-    response = api_client.post('/api/v1/interviews/', data, format='json')
+    data = {
+        "application": str(application.pk),
+        "interviewer": str(employer.pk),
+        "starts_at": start.isoformat(),
+        "ends_at": (start + timedelta(hours=1)).isoformat(),
+        "location": "Lagos office",
+    }
+    response = api_client.post("/api/v1/interviews/", data, format="json")
     assert response.status_code == 201, response.data
-    pk = response.data['id']
-    assert api_client.post('/api/v1/interviews/', data, format='json').status_code == 409
-    assert api_client.patch(f'/api/v1/interviews/{pk}/', {"feedback": "Internal notes"}).status_code == 200
+    pk = response.data["id"]
+    assert api_client.post("/api/v1/interviews/", data, format="json").status_code == 409
+    assert (
+        api_client.patch(f"/api/v1/interviews/{pk}/", {"feedback": "Internal notes"}).status_code
+        == 200
+    )
     api_client.force_authenticate(candidate)
-    response = api_client.get(f'/api/v1/interviews/{pk}/')
+    response = api_client.get(f"/api/v1/interviews/{pk}/")
     assert response.status_code == 200
-    assert 'feedback' not in response.data
-    assert api_client.patch(f'/api/v1/interviews/{pk}/', {"status": "CANCELLED"}).status_code == 403
+    assert "feedback" not in response.data
+    assert api_client.patch(f"/api/v1/interviews/{pk}/", {"status": "CANCELLED"}).status_code == 403
     api_client.force_authenticate(employer)
-    assert api_client.patch(f'/api/v1/interviews/{pk}/', {"status": "CANCELLED"}).status_code == 200
+    assert api_client.patch(f"/api/v1/interviews/{pk}/", {"status": "CANCELLED"}).status_code == 200
     assert Interview.objects.get(pk=pk).status == "CANCELLED"
 
 
@@ -39,14 +48,14 @@ def test_notification_outbox_retry_and_owner(api_client, recruitment, settings):
     candidate, employer, job, resume = recruitment
     ApplicationSubmissionService.submit_application(candidate, job.pk, resume.pk)
     assert Notification.objects.count() == 2
-    settings.EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+    settings.EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
     assert NotificationService.dispatch() == 2
     assert len(mail.outbox) == 2
     assert NotificationService.dispatch() == 0
     item = Notification.objects.filter(user=candidate).first()
     api_client.force_authenticate(employer)
-    assert api_client.get(f'/api/v1/notifications/{item.pk}/').status_code == 404
+    assert api_client.get(f"/api/v1/notifications/{item.pk}/").status_code == 404
     api_client.force_authenticate(candidate)
-    assert api_client.post(f'/api/v1/notifications/{item.pk}/read/').status_code == 200
+    assert api_client.post(f"/api/v1/notifications/{item.pk}/read/").status_code == 200
     api_client.force_authenticate(employer)
-    assert api_client.get('/api/v1/employer/reports/').data['data']['applications'] == 1
+    assert api_client.get("/api/v1/employer/reports/").data["data"]["applications"] == 1

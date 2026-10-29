@@ -1,6 +1,7 @@
-from typing import Any, Optional
-from rest_framework.response import Response
+from typing import Any
+
 from rest_framework import status
+from rest_framework.response import Response
 
 
 class APIResponse(Response):
@@ -10,13 +11,14 @@ class APIResponse(Response):
         "data": <payload>
     }
     """
+
     def __init__(
         self,
         data: Any = None,
         status_code: int = status.HTTP_200_OK,
-        message: Optional[str] = None,
-        headers: Optional[dict] = None,
-        **kwargs
+        message: str | None = None,
+        headers: dict | None = None,
+        **kwargs,
     ):
         envelope = {"data": data}
         if message:

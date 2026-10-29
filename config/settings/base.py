@@ -1,5 +1,5 @@
-import os
 from pathlib import Path
+
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -93,9 +93,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-DATABASES = {
-    "default": env.db("DATABASE_URL")
-}
+DATABASES = {"default": env.db("DATABASE_URL")}
 
 AUTH_USER_MODEL = "users.User"
 
@@ -203,15 +201,32 @@ LOGGING = {
 }
 
 LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/"
+LOGIN_REDIRECT_URL = "/dashboard/"
 
 AUTH_RATE_LIMIT = env.int("AUTH_RATE_LIMIT", default=30)
 MIDDLEWARE.insert(3, "apps.common.security.AuthenticationRateLimitMiddleware")
-REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = ["rest_framework.authentication.SessionAuthentication"]
-REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = ["rest_framework.throttling.AnonRateThrottle", "rest_framework.throttling.UserRateThrottle"]
+REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = [
+    "rest_framework.authentication.SessionAuthentication"
+]
+REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = [
+    "rest_framework.throttling.AnonRateThrottle",
+    "rest_framework.throttling.UserRateThrottle",
+]
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {"anon": "120/min", "user": "600/min"}
 DATA_UPLOAD_MAX_MEMORY_SIZE = 6 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
+
+REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [
+    "apps.common.renderers.EnvelopeJSONRenderer",
+    "rest_framework.renderers.BrowsableAPIRenderer",
+]
+
+SPECTACULAR_SETTINGS["ENUM_NAME_OVERRIDES"] = {
+    "UserRoleEnum": "apps.users.models.UserRole.choices",
+    "MembershipRoleEnum": "apps.companies.models.EmployerRole.choices",
+    "ApplicationStatusEnum": "apps.applications.models.ApplicationStatus.choices",
+    "JobStatusEnum": "apps.jobs.models.JobStatus.choices",
+}

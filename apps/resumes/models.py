@@ -1,11 +1,13 @@
 import os
 import uuid
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from apps.common.models import UUIDTimeStampedModel
-from apps.resumes.storage import PrivateResumeStorage
-from apps.common.validators import validate_resume_file
+
 from apps.candidates.models import CandidateProfile
+from apps.common.models import UUIDTimeStampedModel
+from apps.common.validators import validate_resume_file
+from apps.resumes.storage import PrivateResumeStorage
 
 
 def resume_upload_path(instance, filename):
@@ -21,6 +23,7 @@ class Resume(UUIDTimeStampedModel):
     """
     Encrypted/protected resume document belonging to a CandidateProfile.
     """
+
     candidate = models.ForeignKey(
         CandidateProfile,
         on_delete=models.CASCADE,
@@ -51,7 +54,9 @@ class Resume(UUIDTimeStampedModel):
 
     def set_as_default(self):
         """Sets this resume as default and unsets any previous default."""
-        Resume.objects.filter(candidate=self.candidate, is_default=True).exclude(pk=self.pk).update(is_default=False)
+        Resume.objects.filter(candidate=self.candidate, is_default=True).exclude(pk=self.pk).update(
+            is_default=False
+        )
         self.is_default = True
         self.save(update_fields=["is_default", "updated_at"])
 

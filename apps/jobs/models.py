@@ -1,11 +1,10 @@
-import uuid
-from decimal import Decimal
-from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
-from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+
 from apps.common.models import UUIDTimeStampedModel
 from apps.companies.models import Company
 
@@ -14,6 +13,7 @@ class JobCategory(UUIDTimeStampedModel):
     """
     Standardized taxonomy category for job listings (e.g., Software Engineering, Design).
     """
+
     name = models.CharField(_("category name"), max_length=100, unique=True, db_index=True)
     slug = models.SlugField(_("slug"), max_length=120, unique=True, db_index=True)
     description = models.TextField(_("description"), blank=True)
@@ -39,6 +39,7 @@ class Skill(UUIDTimeStampedModel):
     Searchable skills taxonomy tag for jobs and candidates.
     Duplicate prevention via lowercased name validation and unique slug.
     """
+
     name = models.CharField(_("skill name"), max_length=100, unique=True, db_index=True)
     slug = models.SlugField(_("slug"), max_length=120, unique=True, db_index=True)
     category = models.ForeignKey(
@@ -110,6 +111,7 @@ class Job(UUIDTimeStampedModel):
     """
     Comprehensive job listing model representing vacancies published by companies.
     """
+
     company = models.ForeignKey(
         Company,
         on_delete=models.CASCADE,
@@ -157,8 +159,12 @@ class Job(UUIDTimeStampedModel):
     location = models.CharField(_("city or office location"), max_length=255, db_index=True)
     country = models.CharField(_("country"), max_length=100, db_index=True)
 
-    salary_min = models.DecimalField(_("minimum salary"), max_digits=12, decimal_places=2, null=True, blank=True)
-    salary_max = models.DecimalField(_("maximum salary"), max_digits=12, decimal_places=2, null=True, blank=True)
+    salary_min = models.DecimalField(
+        _("minimum salary"), max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    salary_max = models.DecimalField(
+        _("maximum salary"), max_digits=12, decimal_places=2, null=True, blank=True
+    )
     salary_currency = models.CharField(_("salary currency"), max_length=3, default="USD")
     salary_period = models.CharField(
         _("salary period"),
@@ -176,7 +182,9 @@ class Job(UUIDTimeStampedModel):
     )
 
     published_at = models.DateTimeField(_("published at"), null=True, blank=True, db_index=True)
-    application_deadline = models.DateTimeField(_("application deadline"), null=True, blank=True, db_index=True)
+    application_deadline = models.DateTimeField(
+        _("application deadline"), null=True, blank=True, db_index=True
+    )
 
     class Meta:
         verbose_name = _("job listing")
@@ -196,15 +204,19 @@ class Job(UUIDTimeStampedModel):
         super().clean()
         if self.salary_min is not None and self.salary_max is not None:
             if self.salary_min > self.salary_max:
-                raise ValidationError({
-                    "salary_min": _("Minimum salary cannot be greater than maximum salary.")
-                })
+                raise ValidationError(
+                    {"salary_min": _("Minimum salary cannot be greater than maximum salary.")}
+                )
 
         if self.application_deadline and self.status == JobStatus.PUBLISHED:
             if self.application_deadline < timezone.now():
-                raise ValidationError({
-                    "application_deadline": _("Application deadline cannot be in the past for published jobs.")
-                })
+                raise ValidationError(
+                    {
+                        "application_deadline": _(
+                            "Application deadline cannot be in the past for published jobs."
+                        )
+                    }
+                )
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -234,6 +246,7 @@ class Job(UUIDTimeStampedModel):
 
 class JobSkill(UUIDTimeStampedModel):
     """Associates a Skill with a Job listing."""
+
     job = models.ForeignKey(
         Job,
         on_delete=models.CASCADE,

@@ -1,4 +1,5 @@
 from rest_framework import permissions
+
 from apps.companies.models import EmployerMembership, EmployerRole
 
 
@@ -6,6 +7,7 @@ class IsCompanyMember(permissions.BasePermission):
     """
     Allows access only to active members belonging to the specified company.
     """
+
     def has_object_permission(self, request, view, obj):
         if not request.user or not request.user.is_authenticated:
             return False
@@ -25,6 +27,7 @@ class IsCompanyAdminOrOwner(permissions.BasePermission):
     """
     Allows access only to company Owners, Admins, or platform Superadmins.
     """
+
     def has_object_permission(self, request, view, obj):
         if not request.user or not request.user.is_authenticated:
             return False
