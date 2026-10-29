@@ -67,7 +67,7 @@ CACHES = {
     }
 }
 
-SECURE_REDIRECT_EXEMPT = [r"^health/live/$"]
+SECURE_REDIRECT_EXEMPT = [r"^health/(?:live/)?$"]
 
 # Expand high-entropy platform-generated keys to Django's preferred key length.
 SECRET_KEY = hashlib.sha256(SECRET_KEY.encode()).hexdigest()
