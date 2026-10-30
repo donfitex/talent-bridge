@@ -1,1 +1,12 @@
-{% extends "base.html" %}{% block content %}<section class="container py-5"><div class="mx-auto card shadow-sm p-4 form-panel"><p class="eyebrow">TALENTBRIDGE</p><h1 class="h3 mb-4">{{ title }}</h1><form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">Continue</button></form><p class="small mt-4"><a href="/accounts/password/reset/">Forgot your password?</a> · <a href="/accounts/register/">Create an account</a></p></div></section>{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+<section class="container py-5"><div class="mx-auto card shadow-sm p-4 form-panel">
+<p class="eyebrow">TALENTBRIDGE</p><h1 class="h3 mb-4">{{ title }}</h1>
+<form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">{{ submit_label|default:"Continue" }}</button></form>
+{% if request.resolver_match.url_name == 'web-login' %}
+<p class="small mt-4"><a href="{% url 'web-password-request' %}">Forgot your password?</a></p>
+{% elif request.resolver_match.url_name == 'web-register' %}
+<p class="small mt-4">Already registered? <a href="{% url 'web-login' %}">Log in</a></p>
+{% endif %}
+</div></section>
+{% endblock %}

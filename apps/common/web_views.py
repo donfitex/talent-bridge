@@ -19,6 +19,7 @@ from apps.applications.services import (
     ApplicationWithdrawalService,
 )
 from apps.candidates.models import CandidateProfile
+from apps.common.models import SiteContent
 from apps.common.web_forms import (
     ApplicationForm,
     CandidateForm,
@@ -92,6 +93,7 @@ def jobs(request):
             "page_obj": Paginator(qs, 12).get_page(request.GET.get("page")),
             "categories": JobCategory.objects.filter(is_active=True),
             "query": query,
+            "content": SiteContent.objects.filter(key="home").first(),
         },
     )
 
@@ -111,6 +113,8 @@ def job_detail(request, pk):
 
 
 def register(request):
+    if request.user.is_authenticated:
+        return redirect("/dashboard/")
     form = RegistrationForm(request.POST or None)
     return form_page(request, "Create your account", form, lambda f: f.save(), "web-login")
 
@@ -350,3 +354,21 @@ def verify_email(request):
 @login_required
 def dashboard(request):
     return redirect("web-candidate" if request.user.is_candidate else "web-employer")
+
+
+def contact(request):
+    from apps.common.web_forms import ContactForm
+
+    form = ContactForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "Your message has been received. Our team will reply by email.")
+        return redirect("web-contact")
+    return render(
+        request,
+        "web/contact.html",
+        {
+            "form": form,
+            "content": SiteContent.objects.filter(key="contact").first(),
+        },
+    )

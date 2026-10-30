@@ -12,3 +12,6 @@ errorlog = "-"
 capture_output = True
 max_requests = 1000
 max_requests_jitter = 100
+
+# The system user has no home directory; keep the control socket in writable /tmp.
+control_socket = "/tmp/talentbridge-gunicorn.sock"

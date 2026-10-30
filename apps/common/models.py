@@ -26,3 +26,23 @@ class UUIDTimeStampedModel(TimeStampedModel):
     class Meta:
         abstract = True
         ordering = ["-created_at"]
+
+
+class ContactMessage(UUIDTimeStampedModel):
+    name = models.CharField(max_length=150)
+    email = models.EmailField()
+    subject = models.CharField(max_length=200)
+    message = models.TextField(max_length=5000)
+    resolved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.subject
+
+
+class SiteContent(models.Model):
+    key = models.SlugField(primary_key=True)
+    title = models.CharField(max_length=200)
+    body = models.TextField(max_length=5000)
+
+    def __str__(self):
+        return self.title

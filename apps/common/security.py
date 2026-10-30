@@ -13,7 +13,14 @@ class AuthenticationRateLimitMiddleware:
     def __call__(self, request):
         if request.method == "POST" and (
             request.path.startswith("/api/v1/auth/")
-            or request.path in {"/accounts/login/", "/accounts/register/"}
+            or request.path
+            in {
+                "/accounts/login/",
+                "/accounts/register/",
+                "/accounts/password/reset/",
+                "/contact/",
+                "/admin/login/",
+            }
         ):
             key = "auth-rate:{}:{}".format(
                 request.META.get("REMOTE_ADDR", "unknown"), int(timezone.now().timestamp()) // 300

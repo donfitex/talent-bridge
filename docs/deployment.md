@@ -52,3 +52,15 @@ https://render.com/docs/free
 https://neon.com/docs/guides/django
 https://neon.com/docs/storage/get-started
 https://help.brevo.com/hc/en-us/articles/115000188150-Troubleshooting-Issues-with-Brevo-SMTP
+
+
+## Live Render service configuration correction (2026-10-30)
+
+The live service is https://talent-bridge-6um8.onrender.com in My Workspace.
+Its original environment included `REDIS_URL=redis://redis:6379/1`, a Docker Compose hostname that is unavailable on Render. This caused signup POSTs, API throttles and readiness checks to fail. The service now uses `CACHE_BACKEND=database` and an empty `REDIS_URL`; PostgreSQL provides the shared cache and atomic authentication counters. Redis requires explicitly selecting `CACHE_BACKEND=redis` and providing a reachable private Redis URL.
+
+Set `PRODUCTION_DOMAIN=talent-bridge-6um8.onrender.com` (hostname only) and `FRONTEND_URL=https://talent-bridge-6um8.onrender.com` (full origin, without trailing slash). FRONTEND_URL generates verification/reset links. Render's external hostname is automatically added to allowed hosts and CSRF origins. PRODUCTION_DOMAIN is a deployment label; it does not register a domain or configure DNS.
+
+The Docker default command now runs `scripts/start.py`, so manual Render services also run direct database migrations, create the cache table and seed categories before Gunicorn starts. The Blueprint uses the same startup path.
+
+Staff administration is `/admin/`. A superuser manages recruitment records, users and permissions, homepage/contact content under Site content, and enquiries under Contact messages. Candidate/job skill associations are included. CVs retain authorized private downloads. Contact submissions are saved to the admin inbox; this does not depend on SMTP. Staff accounts must be created with `python manage.py createsuperuser` against the intended production database; public signup never grants staff access.

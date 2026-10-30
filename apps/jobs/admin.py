@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.jobs.models import Job, JobCategory, Skill
+from apps.jobs.models import Job, JobCategory, JobSkill, Skill
 
 
 @admin.register(Job)
@@ -28,3 +28,11 @@ class SkillAdmin(admin.ModelAdmin):
     search_fields = ["name"]
     list_filter = []
     list_select_related = True
+
+
+@admin.register(JobSkill)
+class JobSkillAdmin(admin.ModelAdmin):
+    list_display = ["job", "skill", "is_required"]
+    search_fields = ["job__title", "skill__name"]
+    readonly_fields = ["created_at", "updated_at"]
+    autocomplete_fields = ["job", "skill"]

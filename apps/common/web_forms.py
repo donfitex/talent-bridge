@@ -29,7 +29,8 @@ class RegistrationForm(forms.Form):
             return data
         self.serializer = UserRegistrationSerializer(data=data, context={"role": data["role"]})
         if not self.serializer.is_valid():
-            raise forms.ValidationError(str(self.serializer.errors))
+            for field, errors in self.serializer.errors.items():
+                self.add_error(field if field in self.fields else None, [str(e) for e in errors])
         return data
 
     def save(self):
@@ -154,3 +155,19 @@ class PasswordResetForm(forms.Form):
             if not serializer.is_valid():
                 raise forms.ValidationError(str(serializer.errors))
         return data
+
+
+class ContactForm(forms.ModelForm):
+    website = forms.CharField(required=False, widget=forms.HiddenInput)
+
+    class Meta:
+        from apps.common.models import ContactMessage
+
+        model = ContactMessage
+        fields = ["name", "email", "subject", "message"]
+        widgets = {"message": forms.Textarea(attrs={"rows": 6})}
+
+    def clean_website(self):
+        if self.cleaned_data.get("website"):
+            raise forms.ValidationError("Unable to submit this message.")
+        return ""

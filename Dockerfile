@@ -9,4 +9,4 @@ RUN python manage.py collectstatic --noinput --settings=config.settings.build
 RUN mkdir -p /app/staticfiles /app/private_media/resumes /app/media && chown -R app:app /app
 USER app
 EXPOSE 8000
-CMD ["gunicorn", "config.wsgi:application", "--config", "gunicorn.conf.py"]
+CMD ["python", "scripts/start.py"]

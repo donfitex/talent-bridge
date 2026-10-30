@@ -63,11 +63,12 @@ if DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql":
 if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS:
     raise ImproperlyConfigured("Production requires explicit DJANGO_ALLOWED_HOSTS.")
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
-if env("REDIS_URL", default=""):
+if env("CACHE_BACKEND", default="database") == "redis":
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.redis.RedisCache",
             "LOCATION": env("REDIS_URL"),
+            "OPTIONS": {"socket_connect_timeout": 5, "socket_timeout": 5},
         }
     }
 else:

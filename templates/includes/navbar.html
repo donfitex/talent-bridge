@@ -21,7 +21,7 @@
 
             <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
                 {% if user.is_authenticated %}
-                    {% if user.is_employer or user.is_recruiter %}
+                    {% if user.is_employer or user.is_recruiter or user.is_admin_user %}
                         <li class="nav-item">
                             <a class="btn btn-outline-primary btn-sm rounded-pill px-3" href="/employer/jobs/new/">
                                 <i class="bi bi-plus-circle me-1"></i> Post a Job
@@ -56,7 +56,7 @@
                                 <li><a class="dropdown-item" href="/employer/company/"><i class="bi bi-building me-2"></i> Company Profile</a></li>
                                 <li><a class="dropdown-item" href="/employer/jobs/"><i class="bi bi-briefcase me-2"></i> Manage Jobs</a></li>
                             {% endif %}
-                            <li><a class="dropdown-item" href="/api/docs/"><i class="bi bi-code-slash me-2"></i> API Docs</a></li>
+                            {% if user.is_staff %}<li><a class="dropdown-item" href="/admin/">Administration</a></li>{% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="post" action="/accounts/logout/" class="d-inline">

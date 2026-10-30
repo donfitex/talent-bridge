@@ -5,6 +5,7 @@ from apps.common import web_views as v
 from apps.common.web_forms import EmailLoginForm
 
 urlpatterns = [
+    path("contact/", v.contact, name="web-contact"),
     path("dashboard/", v.dashboard),
     path("accounts/password/reset/", v.password_request, name="web-password-request"),
     path("reset-password/", v.password_reset),
