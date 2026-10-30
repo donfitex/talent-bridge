@@ -1,0 +1,2 @@
+TalentBridge Neon Object Storage verification.
+Private upload and read-back succeeded.

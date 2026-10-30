@@ -2,6 +2,8 @@ from pathlib import Path
 
 import environ
 
+from config.database import database_config
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 env = environ.Env(
@@ -24,6 +26,8 @@ env = environ.Env(
 
 # Read .env file if it exists
 env_file = BASE_DIR / ".env"
+if not env_file.exists():
+    env_file = BASE_DIR / ".env.local"
 if env_file.exists():
     environ.Env.read_env(str(env_file))
 
@@ -93,7 +97,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
-DATABASES = {"default": env.db("DATABASE_URL")}
+DATABASES = {"default": database_config(env)}
 
 AUTH_USER_MODEL = "users.User"
 
@@ -238,3 +242,28 @@ SPECTACULAR_SETTINGS["POSTPROCESSING_HOOKS"] = [
 
 EMAIL_TIMEOUT = env.int("EMAIL_TIMEOUT", default=10)
 EMAIL_USE_SSL = env.bool("EMAIL_USE_SSL", default=False)
+
+# Neon Object Storage uses S3 protocol variables injected by neon deploy.
+RESUME_STORAGE_BACKEND = env("RESUME_STORAGE_BACKEND", default="local")
+NEON_STORAGE_BUCKET = env("NEON_STORAGE_BUCKET", default="uploads")
+AWS_ENDPOINT_URL_S3 = env("AWS_ENDPOINT_URL_S3", default="")
+AWS_REGION = env("AWS_REGION", default="us-east-2")
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID", default="")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="")
+AWS_SESSION_TOKEN = env("AWS_SESSION_TOKEN", default="")
+
+CACHE_BACKEND = env("CACHE_BACKEND", default="local")
+if CACHE_BACKEND == "database":
+    CACHES = {
+        "default": {
+            "BACKEND": "apps.common.cache.PostgresCache",
+            "LOCATION": "talentbridge_cache",
+            "TIMEOUT": 300,
+        }
+    }
+
+if RESUME_STORAGE_BACKEND == "neon":
+    STORAGES = {
+        "default": {"BACKEND": "apps.resumes.storage.NeonMediaStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    }

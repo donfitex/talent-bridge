@@ -15,3 +15,6 @@ staticfiles
 db.sqlite3
 .local
 tmp
+
+.neon
+node_modules

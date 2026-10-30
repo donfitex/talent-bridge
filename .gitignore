@@ -77,3 +77,11 @@ venv.bak/
 # Local verification artifacts
 tmp/
 .local/
+.neon
+node_modules/
+
+# Neon and Node tooling; credentials remain local
+.neon
+.env.local
+.env.*.local
+node_modules/

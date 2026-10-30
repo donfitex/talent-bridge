@@ -2,8 +2,10 @@ import hashlib
 
 from django.core.exceptions import ImproperlyConfigured
 
+from config.database import database_config
+
 from .base import *  # noqa: F403
-from .base import BASE_DIR, env
+from .base import BASE_DIR, RESUME_STORAGE_BACKEND, env
 
 DEBUG = False
 
@@ -11,8 +13,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS")
 
 # Database: Expects PostgreSQL in production
-DATABASES = {"default": env.db("DATABASE_URL")}
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
+DATABASES = {"default": database_config(env)}
 
 # HTTPS and Security Headers
 SECURE_SSL_REDIRECT = env.bool("DJANGO_SECURE_SSL_REDIRECT", default=True)
@@ -37,7 +38,9 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 # Production Static Files (WhiteNoise)
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "apps.resumes.storage.NeonMediaStorage"
+        if RESUME_STORAGE_BACKEND == "neon"
+        else "django.core.files.storage.FileSystemStorage",  # noqa: F405
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
@@ -60,12 +63,22 @@ if DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql":
 if not ALLOWED_HOSTS or "*" in ALLOWED_HOSTS:
     raise ImproperlyConfigured("Production requires explicit DJANGO_ALLOWED_HOSTS.")
 CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": env("REDIS_URL", default="redis://redis:6379/1"),
+if env("REDIS_URL", default=""):
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": env("REDIS_URL"),
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "apps.common.cache.PostgresCache",
+            "LOCATION": "talentbridge_cache",
+            "TIMEOUT": 300,
+        }
+    }
+
 
 SECURE_REDIRECT_EXEMPT = [r"^health/(?:live/)?$"]
 
