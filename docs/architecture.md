@@ -36,10 +36,10 @@ can still modify rows. This is an audit trail, not a cryptographic tamper-proof 
 
 Public lists use pagination; company and candidate relations use select_related and
 prefetch_related. Indexed foreign keys and status/date indexes support discovery and
-ATS queries. Redis shares API/authentication counters between Gunicorn workers.
+ATS queries. The Neon PostgreSQL-backed cache shares API/authentication counters; optional Redis remains supported.
 
-The initial Render configuration runs one web instance with a persistent media disk.
-Horizontal web scaling requires replacing local media with private object storage
-and testing the replacement's signed or authorized download behavior. PostgreSQL and
-the outbox remain shared across instances. Increase compute and database connection
-limits based on observed traffic, not worker count alone.
+The current deployment configuration uses one free Render web instance with Neon
+PostgreSQL and private Neon Object Storage. No local persistent disk is required.
+Private CVs stream through permission-checked Django endpoints; general media uses
+signed URLs. Database-backed cache counter updates lock rows for concurrency safety.
+Increase paid capacity only when the user approves it and traffic requires it.

@@ -56,3 +56,23 @@ Final user direction: keep Render deployment prepared without activating paid
 resources. Brevo selected for transactional email; host/port/TLS are configured,
 with SMTP login/key/verified sender intentionally left for secure deployment setup.
 No paid infrastructure or live deployment was activated.
+
+
+## 30 October: Neon and free Render
+
+User selected Neon instead of AWS for both PostgreSQL and file storage. Linked
+calm-cell-51299624 / production, deployed private uploads bucket, pulled credentials
+into the ignored .env, applied existing migrations and seeded categories.
+
+Real Files SDK upload/list/download passed for an 89-byte text file; its contents
+matched. Real Django CV API checks passed (201 upload, 200 matching download,
+403 cross-candidate access). Synthetic database rows were rolled back and the CV
+verification object removed. The text verification object remains for inspection.
+Local HTTP checks for health, jobs, home and login all returned 200. npm run build
+passed. Django tests force local storage and never use the production database.
+
+Render configuration now uses a free web service, no paid disk/database/cron and
+no additional Redis service. Shared cache counters are stored on Neon and updates
+lock rows. Prepared Brevo SMTP uses port 2525 for Render free compatibility. A
+remote Render web deployment and SMTP delivery remain unclaimed; no AWS resources
+or paid Render resources were activated.

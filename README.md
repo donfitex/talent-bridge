@@ -5,7 +5,9 @@ private resumes, applicant tracking, interviews and email/in-app notifications.
 
 ## Run locally
 
-Python 3.12+ is required. In a virtual environment:
+Python 3.12+ is required. For the connected Neon setup, follow [Neon integration](docs/NEON_SETUP.md).
+
+In a virtual environment:
 
 ```sh
 pip install -r requirements-dev.txt
@@ -56,7 +58,8 @@ builds the Docker image. Runtime readiness is at `/health/`; liveness is at
 - [Development](docs/development.md)
 - [Tests and concurrency](docs/testing.md)
 - [Security and private media](docs/security.md)
-- [Render/Docker deployment and recovery](docs/deployment.md)
+- [Free Render + Neon deployment](docs/deployment.md)
+- [Neon setup and real upload verification](docs/NEON_SETUP.md)
 - [Delivery progress](docs/PROGRESS.md)
 
 The repository adapts the supplied engineering plan to recruitment. Event seat

@@ -52,3 +52,15 @@ Remaining engineering work was delivered in reviewable phase commits on main.
 Application duplicate prevention replaces event-seat capacity/waitlists; interview
 overlap control replaces booking conflicts. Deployment and the final live audit
 remain open until the external release gates above are satisfied.
+
+
+## Superseding infrastructure update: 30 October
+
+The user subsequently requested Render free hosting and Neon for PostgreSQL and
+private uploads, replacing the paid Render disk/database plan and the interim
+AWS S3/KMS proposal. See NEON_SETUP.md for the exact project/branch and command
+evidence. Neon provisioning, migrations, a real Files SDK text upload/read-back,
+and Django CV authorization checks have passed. Free Render configuration is
+prepared in render.yaml; it has no paid services. Brevo secrets and an external
+notification scheduler remain deployment setup items. Earlier paid-resource gates
+above describe the historical review and are superseded by this configuration.

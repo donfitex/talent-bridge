@@ -26,3 +26,12 @@ SMTP credentials must never be entered in chat, source files or command argument
 Store database backups and media backups separately and encrypted. Test restoration
 into an isolated environment regularly. Restrict administrator access and review
 membership changes. Do not grant staff access to ordinary recruiters.
+
+
+## Current Neon storage configuration
+
+CVs now use the private Neon uploads bucket instead of local production disk or
+AWS S3/KMS. Existing authorization checks still gate every CV download. The S3
+protocol's AWS_* credential names identify Neon storage credentials in this setup.
+General company media is also stored on Neon with signed URLs, so free-host
+restarts do not discard uploaded logos. No AWS KMS encryption claim applies.
