@@ -20,6 +20,7 @@
             </ul>
 
             <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+                <li class="nav-item"><button id="theme-toggle" class="btn btn-outline-light btn-sm" type="button" aria-label="Switch color theme" aria-pressed="false">Dark mode</button></li>
                 {% if user.is_authenticated %}
                     {% if user.is_employer or user.is_recruiter or user.is_admin_user %}
                         <li class="nav-item">

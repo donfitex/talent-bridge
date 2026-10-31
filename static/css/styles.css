@@ -94,3 +94,56 @@ body {
 .btn-primary { background: #176b57; border-color: #176b57; }
 .btn-primary:hover { background: #104b3d; border-color: #104b3d; }
 @media(max-width:760px) { .detail-grid { grid-template-columns: 1fr; } .search-bar { display: grid; } }
+
+/* Shared light/dark surfaces and contrast. Keep button labels separate from link colors. */
+:root, [data-bs-theme="light"] {
+    color-scheme: light;
+    --tb-page: #f8fafc; --tb-surface: #ffffff; --tb-text: #243447;
+    --tb-muted: #526176; --tb-border: #cbd5e1; --tb-tint: #edf5ef;
+    --tb-link: #17634f; --tb-danger: #b42335;
+    --bs-body-color: var(--tb-text); --bs-body-bg: var(--tb-page);
+}
+[data-bs-theme="dark"] {
+    color-scheme: dark;
+    --tb-page: #111827; --tb-surface: #1e293b; --tb-text: #f1f5f9;
+    --tb-muted: #b8c5d6; --tb-border: #526176; --tb-tint: #243d36;
+    --tb-link: #8de2c4; --tb-danger: #ff9baa;
+    --bs-body-color: var(--tb-text); --bs-body-bg: var(--tb-page);
+    --bs-secondary-color: var(--tb-muted); --bs-border-color: var(--tb-border);
+    --bs-link-color: var(--tb-link); --bs-link-hover-color: #c4f6e5;
+}
+body { background: var(--tb-page) !important; color: var(--tb-text); }
+.card, .job-card, .search-bar, footer.bg-white, .table.bg-white {
+    background-color: var(--tb-surface) !important; color: var(--tb-text); border-color: var(--tb-border);
+}
+.hero, .empty-state { background: var(--tb-tint); color: var(--tb-text); border-color: var(--tb-border); }
+.text-muted, .helptext { color: var(--tb-muted) !important; }
+.eyebrow, .job-card a:not(.btn), .company-monogram { color: var(--tb-link); }
+.company-monogram, .tag { background: var(--tb-tint); color: var(--tb-link); }
+.job-card a:not(.btn):hover { text-decoration: underline; }
+.search-bar input, .search-bar select, .form-panel input:not([type=checkbox]),
+.form-panel select, .form-panel textarea, .job-card input:not([type=checkbox]), .job-card textarea {
+    background-color: var(--tb-surface); color: var(--tb-text); border-color: var(--tb-border);
+}
+input::placeholder, textarea::placeholder { color: var(--tb-muted); opacity: 1; }
+input[type=file]::file-selector-button { background: var(--tb-tint); color: var(--tb-text); border: 1px solid var(--tb-border); }
+.btn-primary, .job-card a.btn-primary {
+    --bs-btn-bg: #17634f; --bs-btn-border-color: #17634f;
+    --bs-btn-hover-bg: #104b3d; --bs-btn-hover-border-color: #104b3d;
+    --bs-btn-active-bg: #104b3d; --bs-btn-active-border-color: #104b3d;
+    background-color: #17634f; border-color: #17634f; color: #ffffff !important;
+}
+.btn-primary:hover, .btn-primary:focus-visible { background-color: #104b3d; border-color: #104b3d; }
+.btn-outline-primary, .job-card a.btn-outline-primary {
+    color: var(--tb-link); border-color: var(--tb-link);
+    --bs-btn-hover-bg: #17634f; --bs-btn-hover-border-color: #17634f;
+    --bs-btn-hover-color: #ffffff; --bs-btn-active-bg: #17634f;
+}
+.btn-outline-primary:hover, .job-card a.btn-outline-primary:hover { color: #ffffff; background: #17634f; }
+.text-danger, .errorlist { color: var(--tb-danger) !important; }
+.table { --bs-table-color: var(--tb-text); --bs-table-bg: var(--tb-surface); --bs-table-border-color: var(--tb-border); }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, summary:focus-visible {
+    outline: 3px solid #b77900; outline-offset: 3px;
+}
+[data-bs-theme="dark"] :focus-visible { outline-color: #facc15; }
+@media (prefers-reduced-motion: reduce) { .card-hover, .skeleton { transition: none; animation: none; } }
