@@ -18,6 +18,7 @@ class AuthenticationRateLimitMiddleware:
                 "/accounts/login/",
                 "/accounts/register/",
                 "/accounts/password/reset/",
+                "/accounts/password/code/",
                 "/contact/",
                 "/admin/login/",
             }

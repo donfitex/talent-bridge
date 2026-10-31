@@ -310,16 +310,63 @@ def schedule_interview(request, pk):
 
 
 def password_request(request):
+    from django.conf import settings
+
     from apps.common.web_forms import PasswordRequestForm
+    from apps.users.recovery import send_code
     from apps.users.services import UserService
 
     form = PasswordRequestForm(request.POST or None)
-    return form_page(
+    if request.method == "POST" and form.is_valid():
+        try:
+            if settings.NEON_AUTH_BASE_URL:
+                send_code(form.cleaned_data["email"])
+            elif not UserService.request_password_reset(form.cleaned_data["email"]):
+                raise ValidationError("Email delivery is unavailable. Please try again later.")
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            if settings.NEON_AUTH_BASE_URL:
+                messages.success(
+                    request, "Check your inbox and spam folder for your verification code."
+                )
+                return redirect("web-code-reset")
+            messages.success(
+                request, "If an account exists, password reset instructions have been sent."
+            )
+            return redirect("web-login")
+    return render(
         request,
-        "Reset your password",
-        form,
-        lambda f: UserService.request_password_reset(f.cleaned_data["email"]),
-        "web-login",
+        "web/form.html",
+        {"title": "Reset your password", "form": form, "submit_label": "Send verification code"},
+    )
+
+
+def password_code_reset(request):
+    from apps.common.web_forms import EmailCodeResetForm
+    from apps.users.recovery import recover
+
+    form = EmailCodeResetForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            recover(
+                form.cleaned_data["email"],
+                form.cleaned_data["code"],
+                form.cleaned_data["new_password"],
+            )
+        except ValidationError as exc:
+            form.add_error(None, exc)
+        else:
+            messages.success(request, "Your password has been changed. You can now log in.")
+            return redirect("web-login")
+    return render(
+        request,
+        "web/form.html",
+        {
+            "title": "Enter your email code and new password",
+            "form": form,
+            "submit_label": "Change password",
+        },
     )
 
 

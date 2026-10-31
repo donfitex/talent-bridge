@@ -171,3 +171,10 @@ class ContactForm(forms.ModelForm):
         if self.cleaned_data.get("website"):
             raise forms.ValidationError("Unable to submit this message.")
         return ""
+
+
+class EmailCodeResetForm(PasswordResetForm):
+    email = forms.EmailField()
+    code = forms.RegexField(
+        regex=r"^\d{6}$", min_length=6, max_length=6, label="Email verification code"
+    )
