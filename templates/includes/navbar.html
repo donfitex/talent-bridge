@@ -56,7 +56,7 @@
                                 <li><a class="dropdown-item" href="/employer/company/"><i class="bi bi-building me-2"></i> Company Profile</a></li>
                                 <li><a class="dropdown-item" href="/employer/jobs/"><i class="bi bi-briefcase me-2"></i> Manage Jobs</a></li>
                             {% endif %}
-                            {% if user.is_staff %}<li><a class="dropdown-item" href="/admin/">Administration</a></li>{% endif %}
+                            {% if user.is_staff and perms.common.view_contactmessage %}<li><a class="dropdown-item" href="{% url 'web-contact-inbox' %}">Contact inbox</a></li>{% endif %}{% if user.is_staff %}<li><a class="dropdown-item" href="/admin/">Administration</a></li>{% endif %}
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="post" action="/accounts/logout/" class="d-inline">

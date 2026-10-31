@@ -35,6 +35,20 @@ class ContactMessage(UUIDTimeStampedModel):
     message = models.TextField(max_length=5000)
     resolved = models.BooleanField(default=False)
 
+    @property
+    def reply_url(self):
+        from urllib.parse import quote, urlencode
+
+        subject = self.subject.replace("\r", " ").replace("\n", " ").strip()
+        if not subject.lower().startswith("re:"):
+            subject = "Re: " + subject
+        return (
+            "mailto:"
+            + quote(self.email, safe="@.")
+            + "?"
+            + urlencode({"subject": subject}, quote_via=quote)
+        )
+
     def __str__(self):
         return self.subject
 

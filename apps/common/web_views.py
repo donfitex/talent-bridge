@@ -511,3 +511,15 @@ def confirm_external_application(request, pk):
         return redirect("web-applications")
     messages.info(request, "No application was recorded. You can return when you have applied.")
     return redirect("web-job-detail", pk=job.pk)
+
+
+@login_required
+def contact_inbox(request):
+    from apps.common.models import ContactMessage
+
+    if not (request.user.is_staff and request.user.has_perm("common.view_contactmessage")):
+        raise PermissionDenied
+    page = Paginator(ContactMessage.objects.all(), 20).get_page(request.GET.get("page"))
+    response = render(request, "web/contact_inbox.html", {"page_obj": page})
+    response["Cache-Control"] = "private, no-store"
+    return response
