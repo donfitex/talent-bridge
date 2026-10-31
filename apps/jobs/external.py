@@ -1,11 +1,14 @@
 """Normalize and import untrusted scraper data through validated Django models."""
 
+import datetime
 import hashlib
 import re
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
+from django.utils.dateparse import parse_date, parse_datetime
 
 from apps.companies.models import Company
 from apps.jobs.models import Job, JobCategory
@@ -39,6 +42,20 @@ def canonical_url(value, site):
         if key:
             return "https://www.indeed.com/viewjob?" + urlencode({"jk": key[0]})
     return urlunsplit(("https", host, parts.path.rstrip("/"), "", ""))
+
+
+def source_deadline(row):
+    value = text(row.get("application_deadline")) or text(row.get("validThrough"))
+    if not value:
+        return None
+    try:
+        parsed = parse_datetime(value)
+        if parsed is None:
+            day = parse_date(value)
+            parsed = datetime.datetime.combine(day, datetime.time.max) if day else None
+        return timezone.make_aware(parsed) if parsed and timezone.is_naive(parsed) else parsed
+    except (ValueError, TypeError):
+        return None
 
 
 def content_fields(row):
@@ -125,6 +142,9 @@ def import_job(row, country, category_name, dry_run=False):
             ):
                 setattr(existing, field, value)
                 changed.append(field)
+        if not existing.application_deadline and source_deadline(row):
+            existing.application_deadline = source_deadline(row)
+            changed.append("application_deadline")
         if changed:
             existing.save(update_fields=[*changed, "updated_at"])
         if dry_run:
@@ -168,6 +188,7 @@ def import_job(row, country, category_name, dry_run=False):
             if text(row.get("is_remote")).lower() == "true"
             else "ONSITE",
             "status": "PENDING_REVIEW",
+            "application_deadline": source_deadline(row),
         },
     )
     if dry_run:

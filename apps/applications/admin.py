@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from apps.applications.models import ApplicationStatusHistory, JobApplication
+from apps.applications.models import ApplicationStatusHistory, ExternalApplication, JobApplication
 
 
 @admin.register(JobApplication)
@@ -24,4 +24,14 @@ class HistoryAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ExternalApplication)
+class ExternalApplicationAdmin(admin.ModelAdmin):
+    list_display = ["candidate", "job", "created_at"]
+    readonly_fields = ["candidate", "job", "created_at", "updated_at"]
+    search_fields = ["candidate__user__email", "job__title"]
+
+    def has_add_permission(self, request):
         return False

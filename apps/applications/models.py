@@ -95,3 +95,18 @@ class ApplicationStatusHistory(UUIDTimeStampedModel):
         if not self._state.adding:
             raise ValueError("Application history is append-only.")
         super().save(*args, **kwargs)
+
+
+class ExternalApplication(UUIDTimeStampedModel):
+    candidate = models.ForeignKey(
+        CandidateProfile, on_delete=models.CASCADE, related_name="external_applications"
+    )
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="external_applications")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["candidate", "job"], name="unique_external_application")
+        ]
+
+    def __str__(self):
+        return f"{self.candidate.user.email}: {self.job.title} (self-reported)"

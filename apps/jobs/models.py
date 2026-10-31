@@ -239,6 +239,10 @@ class Job(UUIDTimeStampedModel):
         super().save(*args, **kwargs)
 
     @property
+    def is_expired(self):
+        return bool(self.application_deadline and self.application_deadline <= timezone.now())
+
+    @property
     def is_accepting_applications(self) -> bool:
         """Determines whether the job is currently eligible to receive applications."""
         if self.source_url or self.status != JobStatus.PUBLISHED:

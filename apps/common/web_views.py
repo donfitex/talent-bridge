@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from rest_framework.exceptions import APIException
 
 from apps.applications.access import employer_applications
-from apps.applications.models import JobApplication
+from apps.applications.models import ExternalApplication, JobApplication
 from apps.applications.services import (
     ApplicationSubmissionService,
     ApplicationTransitionService,
@@ -122,7 +122,16 @@ def job_detail(request, pk):
         if request.user.is_authenticated
         else None
     )
-    return render(request, "web/job_detail.html", {"job": job, "application": existing})
+    external = (
+        ExternalApplication.objects.filter(job=job, candidate__user=request.user).first()
+        if request.user.is_authenticated
+        else None
+    )
+    return render(
+        request,
+        "web/job_detail.html",
+        {"job": job, "application": existing, "external_application": external},
+    )
 
 
 def register(request):
@@ -171,6 +180,9 @@ def candidate_dashboard(request):
         "web/applications.html",
         {
             "applications": applications,
+            "external_applications": ExternalApplication.objects.filter(
+                candidate__user=request.user
+            ).select_related("job__company"),
             "interviews": request.user.candidate_profile.applications.filter(
                 interviews__status="SCHEDULED"
             ).distinct()
@@ -479,3 +491,23 @@ class AccountLoginView(LoginView):
 def company_detail(request, slug):
     company = get_object_or_404(Company, slug=slug)
     return render(request, "web/company_detail.html", {"company": company})
+
+
+@candidate_required
+@require_POST
+def confirm_external_application(request, pk):
+    job = get_object_or_404(Job, pk=pk, status=JobStatus.PUBLISHED)
+    if not job.source_url:
+        raise PermissionDenied
+    if request.POST.get("answer") == "yes":
+        candidate, _ = CandidateProfile.objects.get_or_create(user=request.user)
+        _, created = ExternalApplication.objects.get_or_create(candidate=candidate, job=job)
+        messages.success(
+            request,
+            "Your application has been added to your dashboard."
+            if created
+            else "You have already recorded an application for this role.",
+        )
+        return redirect("web-applications")
+    messages.info(request, "No application was recorded. You can return when you have applied.")
+    return redirect("web-job-detail", pk=job.pk)

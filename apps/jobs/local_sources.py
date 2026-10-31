@@ -87,5 +87,6 @@ def scrape_local(site, limit=5):
                     else "",
                     "company_url_direct": company.get("sameAs"),
                     "description": description,
+                    "validThrough": job.get("validThrough"),
                     "location": "Nigeria",
                 }
