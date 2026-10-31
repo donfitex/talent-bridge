@@ -50,3 +50,21 @@ def test_command_reports_real_counts():
     ):
         call_command("sync_external_jobs", stdout=output)
     assert "Added for admin review: 1; duplicates: 1; invalid: 0" in output.getvalue()
+
+
+def test_full_content_and_duplicate_enrichment():
+    row = {
+        **ROW,
+        "description": "Build useful software.\n## Responsibilities\n- Build APIs\n## Requirements\n- Python experience\n## Benefits\n- Flexible hours",
+    }
+    assert import_job(ROW, "UK", "Engineering")
+    assert not import_job(row, "UK", "Engineering")
+    job = Job.objects.get()
+    assert job.description.startswith("Build useful software.")
+    assert job.responsibilities == "- Build APIs"
+    assert job.requirements == "- Python experience"
+    assert "Flexible hours" not in job.requirements
+    assert job.source_url.startswith("https://www.indeed.com/viewjob?")
+    assert not import_job({**row, "requirements": "Changed source"}, "UK", "Engineering")
+    job.refresh_from_db()
+    assert job.requirements == "- Python experience"

@@ -37,6 +37,7 @@ class Command(BaseCommand):
                 results_wanted=options["results"],
                 hours_old=options["hours_old"],
                 description_format="markdown",
+                fetch_description=True,
                 verbose=1,
             )
         except Exception as exc:

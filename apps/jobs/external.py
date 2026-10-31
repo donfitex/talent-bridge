@@ -1,6 +1,7 @@
 """Normalize and import untrusted scraper data through validated Django models."""
 
 import hashlib
+import re
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from django.core.exceptions import ValidationError
@@ -35,13 +36,69 @@ def canonical_url(value, site):
     return urlunsplit(("https", host, parts.path.rstrip("/"), "", ""))
 
 
+def content_fields(row):
+    description = text(row.get("description"))
+    sections = {
+        "responsibilities": text(row.get("responsibilities")),
+        "requirements": text(row.get("requirements")),
+    }
+    aliases = {
+        "responsibilities": "responsibilities",
+        "key responsibilities": "responsibilities",
+        "what you will do": "responsibilities",
+        "what you'll do": "responsibilities",
+        "requirements": "requirements",
+        "qualifications": "requirements",
+        "required qualifications": "requirements",
+        "what you bring": "requirements",
+        "skills and experience": "requirements",
+    }
+    current = None
+    extracted = {key: [] for key in sections}
+    for line in description.splitlines():
+        heading = line.strip().strip("#*_: ").lower()
+        if heading in aliases:
+            current = aliases[heading]
+        elif re.match(r"^\s*#{1,6}\s+", line) or (
+            line.strip().startswith("**") and line.strip().endswith("**")
+        ):
+            current = None
+        elif current:
+            extracted[current].append(line)
+    for key in sections:
+        if not sections[key]:
+            sections[key] = "\n".join(extracted[key]).strip()
+    return {
+        "description": description[:100000],
+        **{key: value[:50000] for key, value in sections.items()},
+    }
+
+
 @transaction.atomic
 def import_job(row, country, category_name, dry_run=False):
     site = text(row.get("site")).lower()
     if site not in {"linkedin", "indeed"}:
         raise ValidationError("Unsupported source")
     url = canonical_url(row.get("job_url"), site)
-    if Job.objects.filter(source_url=url).exists():
+    content = content_fields(row)
+    existing = Job.objects.select_for_update().filter(source_url=url).first()
+    if existing:
+        changed = []
+        for field, value in content.items():
+            old = getattr(existing, field)
+            if value and (
+                not old
+                or (
+                    field == "description"
+                    and old.startswith("See the original listing for the full job description.")
+                )
+            ):
+                setattr(existing, field, value)
+                changed.append(field)
+        if changed:
+            existing.save(update_fields=[*changed, "updated_at"])
+        if dry_run:
+            transaction.set_rollback(True)
         return False
     title = text(row.get("title"))
     if not title:
@@ -72,6 +129,8 @@ def import_job(row, country, category_name, dry_run=False):
             "company": company,
             "category": category,
             "description": description,
+            "responsibilities": content["responsibilities"],
+            "requirements": content["requirements"],
             "location": text(row.get("location"), "Remote")[:255],
             "country": country[:100],
             "workplace_type": "REMOTE"
