@@ -258,6 +258,12 @@ def employer_dashboard(request):
 
 @employer_required
 def job_edit(request, pk=None):
+    if not (request.user.is_staff or request.user.is_admin_user or request.user.employer_approved):
+        messages.warning(
+            request,
+            "Your employer account is awaiting administrator approval. You can post jobs once it is approved.",
+        )
+        return redirect("web-employer")
     instance = None
     if pk:
         instance = get_object_or_404(Job, pk=pk)

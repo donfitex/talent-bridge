@@ -23,6 +23,12 @@ class JobManagementService:
                 )
             return membership
 
+        if not user.employer_approved:
+            raise TalentBridgeAPIException(
+                detail="Your employer account is awaiting administrator approval. You can post jobs once it is approved.",
+                code="EMPLOYER_APPROVAL_REQUIRED",
+                status_code=403,
+            )
         try:
             return EmployerMembership.objects.get(user=user, company=company, is_active=True)
         except EmployerMembership.DoesNotExist:

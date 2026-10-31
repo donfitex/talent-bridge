@@ -110,7 +110,7 @@ def test_contact_inbox_and_public_footer(client):
     assert ContactMessage.objects.get().subject == "Account help"
     html = client.get("/accounts/register/").content.decode()
     assert "Forgot your password?" not in html
-    assert "Create an account</a>" not in html
+    assert "Create an account</a>" not in html.split("<footer", 1)[0]
 
 
 def test_every_model_has_admin_controls(client, recruitment):

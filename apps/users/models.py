@@ -64,6 +64,10 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
         db_index=True,
     )
 
+    employer_approved = models.BooleanField(
+        default=False, help_text="Only administrators can approve employers to post jobs."
+    )
+
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,

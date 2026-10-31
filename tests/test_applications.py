@@ -17,7 +17,9 @@ pytestmark = pytest.mark.django_db
 @pytest.fixture
 def recruitment():
     candidate = User.objects.create_user("candidate@example.com", "strong-password")
-    employer = User.objects.create_user("employer@example.com", "strong-password", role="EMPLOYER")
+    employer = User.objects.create_user(
+        "employer@example.com", "strong-password", role="EMPLOYER", employer_approved=True
+    )
     profile = CandidateProfile.objects.create(user=candidate)
     company = Company.objects.create(name="Bridge")
     EmployerMembership.objects.create(user=employer, company=company, role="OWNER")
