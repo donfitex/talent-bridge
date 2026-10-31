@@ -4,6 +4,7 @@ from apps.companies.models import Company, EmployerMembership, EmployerRole
 
 
 class CompanySerializer(serializers.ModelSerializer):
+    display_logo_url = serializers.CharField(read_only=True)
     members_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
@@ -17,6 +18,7 @@ class CompanySerializer(serializers.ModelSerializer):
             "company_size",
             "website",
             "logo",
+            "display_logo_url",
             "location",
             "country",
             "verification_status",

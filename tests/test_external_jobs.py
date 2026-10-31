@@ -68,3 +68,47 @@ def test_full_content_and_duplicate_enrichment():
     assert not import_job({**row, "requirements": "Changed source"}, "UK", "Engineering")
     job.refresh_from_db()
     assert job.requirements == "- Python experience"
+
+
+def test_company_metadata_and_public_profile(client):
+    row = {
+        **ROW,
+        "company_description": "We build useful software.",
+        "company_logo": "https://cdn.example.com/logo.png",
+        "company_industry": "Software",
+        "company_url_direct": "https://example.com",
+    }
+    assert import_job(row, "UK", "Engineering")
+    company = Job.objects.get().company
+    assert company.description == "We build useful software."
+    assert company.display_logo_url == "https://cdn.example.com/logo.png"
+    response = client.get(f"/companies/{company.slug}/")
+    assert response.status_code == 200
+    assert b"We build useful software." in response.content
+    assert b"cdn.example.com/logo.png" in response.content
+    assert not import_job(
+        {**row, "company_description": "Overwrite", "company_logo": "javascript:bad"},
+        "UK",
+        "Engineering",
+    )
+    company.refresh_from_db()
+    assert company.description == "We build useful software."
+
+
+def test_import_preserves_published_status(client):
+    from apps.users.models import User
+
+    import_job(ROW, "UK", "Engineering")
+    job = Job.objects.get()
+    user = User.objects.create_superuser("publisher@example.com", "password")
+    client.force_login(user)
+    response = client.post(
+        "/admin/jobs/job/", {"action": "publish_selected", "_selected_action": [str(job.pk)]}
+    )
+    assert response.status_code == 302
+    job.refresh_from_db()
+    assert job.status == "PUBLISHED" and job.published_at
+    assert not import_job(ROW, "UK", "Engineering")
+    job.refresh_from_db()
+    assert job.status == "PUBLISHED"
+    assert b"Published" in client.get(f"/jobs/{job.pk}/").content

@@ -231,7 +231,7 @@ def companies(request):
 
 @employer_required
 def company_create(request):
-    form = CompanyForm(request.POST or None)
+    form = CompanyForm(request.POST or None, request.FILES or None)
 
     def save(form):
         with transaction.atomic():
@@ -474,3 +474,8 @@ class AccountLoginView(LoginView):
         response = super().form_valid(form)
         messages.success(self.request, "Welcome back. You are now logged in.")
         return response
+
+
+def company_detail(request, slug):
+    company = get_object_or_404(Company, slug=slug)
+    return render(request, "web/company_detail.html", {"company": company})

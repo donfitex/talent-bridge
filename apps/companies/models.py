@@ -40,6 +40,8 @@ class Company(UUIDTimeStampedModel):
     )
     website = models.URLField(_("website URL"), max_length=255, blank=True)
     logo = models.ImageField(_("company logo"), upload_to="company_logos/", blank=True, null=True)
+    source_logo_url = models.URLField(max_length=1000, blank=True)
+
     location = models.CharField(_("location"), max_length=255, blank=True)
     country = models.CharField(_("country"), max_length=100, blank=True, db_index=True)
 
@@ -73,6 +75,10 @@ class Company(UUIDTimeStampedModel):
                 counter += 1
             self.slug = slug
         super().save(*args, **kwargs)
+
+    @property
+    def display_logo_url(self):
+        return self.logo.url if self.logo else self.source_logo_url
 
     @property
     def is_verified(self) -> bool:

@@ -74,6 +74,30 @@ def content_fields(row):
     }
 
 
+def safe_company_url(value):
+    value = text(value)
+    parts = urlsplit(value)
+    if parts.scheme == "https" and parts.hostname and not parts.username and not parts.password:
+        return value[:1000]
+    return ""
+
+
+def enrich_company(company, row):
+    values = {
+        "description": text(row.get("company_description"))[:50000],
+        "industry": text(row.get("company_industry"))[:100],
+        "source_logo_url": safe_company_url(row.get("company_logo")),
+        "website": safe_company_url(row.get("company_url_direct"))[:255],
+    }
+    changed = []
+    for field, value in values.items():
+        if value and not getattr(company, field):
+            setattr(company, field, value)
+            changed.append(field)
+    if changed:
+        company.save(update_fields=[*changed, "updated_at"])
+
+
 @transaction.atomic
 def import_job(row, country, category_name, dry_run=False):
     site = text(row.get("site")).lower()
@@ -83,6 +107,7 @@ def import_job(row, country, category_name, dry_run=False):
     content = content_fields(row)
     existing = Job.objects.select_for_update().filter(source_url=url).first()
     if existing:
+        enrich_company(existing.company, row)
         changed = []
         for field, value in content.items():
             old = getattr(existing, field)
@@ -109,6 +134,7 @@ def import_job(row, country, category_name, dry_run=False):
     company, _ = Company.objects.get_or_create(
         slug="external-" + company_key, defaults={"name": name}
     )
+    enrich_company(company, row)
     category, _ = JobCategory.objects.get_or_create(
         name=category_name,
         defaults={"slug": "external-" + hashlib.sha256(category_name.encode()).hexdigest()[:20]},

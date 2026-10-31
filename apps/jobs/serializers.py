@@ -51,7 +51,7 @@ class JobSkillSerializer(serializers.ModelSerializer):
 
 class JobSerializer(serializers.ModelSerializer):
     company_name = serializers.CharField(source="company.name", read_only=True)
-    company_logo = serializers.ImageField(source="company.logo", read_only=True)
+    company_logo = serializers.CharField(source="company.display_logo_url", read_only=True)
     company_slug = serializers.CharField(source="company.slug", read_only=True)
     category_name = serializers.CharField(source="category.name", read_only=True)
     is_accepting_applications = serializers.BooleanField(read_only=True)

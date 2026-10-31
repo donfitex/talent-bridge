@@ -73,6 +73,7 @@ class CompanyForm(forms.ModelForm):
         model = Company
         fields = [
             "name",
+            "logo",
             "description",
             "industry",
             "company_size",

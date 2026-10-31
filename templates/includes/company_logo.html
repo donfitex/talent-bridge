@@ -1,0 +1,1 @@
+{% if company.display_logo_url %}<img src="{{ company.display_logo_url }}" alt="{{ company.name }} logo" width="64" height="64" loading="lazy" referrerpolicy="no-referrer" class="rounded object-fit-contain bg-white">{% else %}<span class="company-monogram" aria-label="{{ company.name }}">{{ company.name|first }}</span>{% endif %}
