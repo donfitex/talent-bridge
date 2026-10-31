@@ -1,4 +1,3 @@
-from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from apps.common import web_views as v
@@ -19,7 +18,7 @@ urlpatterns = [
     path("companies/", v.companies, name="web-companies"),
     path(
         "accounts/login/",
-        auth_views.LoginView.as_view(
+        v.AccountLoginView.as_view(
             template_name="web/form.html",
             authentication_form=EmailLoginForm,
             extra_context={"title": "Welcome back"},

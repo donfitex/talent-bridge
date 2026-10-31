@@ -3,6 +3,7 @@ from functools import wraps
 from django.contrib import messages
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -61,14 +62,26 @@ def candidate_required(view):
     return wrapped
 
 
-def form_page(request, title, form, save, destination):
+def form_page(request, title, form, save, destination, success_message=None):
     if request.method == "POST" and form.is_valid():
         try:
             save(form)
         except (APIException, ValidationError) as exc:
             form.add_error(None, str(exc))
         else:
-            messages.success(request, "Saved successfully.")
+            messages.success(
+                request,
+                success_message
+                or {
+                    "Create your account": "Your account has been created. Log in to complete your profile and get started.",
+                    "Professional profile": "Your professional profile has been updated.",
+                    "Create company profile": "Your company profile has been created. You can now post your first vacancy.",
+                    "Create vacancy": "Your vacancy has been saved as a draft. Review it and publish it when you are ready.",
+                    "Edit vacancy": "Your vacancy has been updated.",
+                    "Schedule interview": "The interview has been scheduled. You can review its details in the application.",
+                    "Choose a new password": "Your password has been changed. Log in with your new password.",
+                }.get(title, "Your changes have been saved."),
+            )
             return redirect(destination)
     return render(request, "web/form.html", {"title": title, "form": form})
 
@@ -123,6 +136,7 @@ def register(request):
 @login_required
 def signout(request):
     logout(request)
+    messages.success(request, "You have been logged out securely.")
     return redirect("web-jobs")
 
 
@@ -138,6 +152,7 @@ def apply(request, pk):
             request.user, job.pk, f.cleaned_data["resume"].pk, f.cleaned_data["cover_letter"]
         ),
         "web-applications",
+        success_message="Your application has been submitted. Track its progress in My applications.",
     )
 
 
@@ -167,6 +182,7 @@ def candidate_dashboard(request):
 def withdraw(request, pk):
     try:
         ApplicationWithdrawalService.withdraw(request.user, pk)
+        messages.success(request, "Your application has been withdrawn.")
     except APIException as exc:
         messages.error(request, str(exc))
     return redirect("web-applications")
@@ -194,6 +210,10 @@ def resumes(request):
         except (APIException, ValidationError) as exc:
             form.add_error(None, str(exc))
         else:
+            messages.success(
+                request,
+                "Your CV has been uploaded securely and is ready to use in job applications.",
+            )
             return redirect("web-resumes")
     return render(
         request,
@@ -272,6 +292,14 @@ def job_action(request, pk, action):
         raise PermissionDenied
     try:
         actions[action](job, request.user)
+        messages.success(
+            request,
+            {
+                "publish": "Your vacancy is now published and accepting applications.",
+                "pause": "Your vacancy has been paused. Candidates cannot submit new applications until you publish it again.",
+                "close": "Your vacancy has been closed to new applications.",
+            }[action],
+        )
     except (APIException, ValidationError) as exc:
         messages.error(request, str(exc))
     return redirect("web-employer")
@@ -289,6 +317,7 @@ def pipeline(request, pk):
             request.user, pk, f.cleaned_data["status"], f.cleaned_data["note"]
         ),
         "web-employer",
+        success_message="The application status has been updated and your review note has been saved.",
     )
 
 
@@ -429,3 +458,10 @@ def managed_auth(request):
     if not url:
         return HttpResponse("Managed signup is not configured.", status=503)
     return render(request, "web/neon_auth.html", {"neon_auth_url": url})
+
+
+class AccountLoginView(LoginView):
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, "Welcome back. You are now logged in.")
+        return response
