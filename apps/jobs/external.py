@@ -20,7 +20,12 @@ def text(value, default=""):
 def canonical_url(value, site):
     parts = urlsplit(text(value))
     host = (parts.hostname or "").lower()
-    domain = "linkedin.com" if site == "linkedin" else "indeed.com"
+    domain = {
+        "linkedin": "linkedin.com",
+        "indeed": "indeed.com",
+        "hotnigerianjobs": "hotnigerianjobs.com",
+        "myjobmag": "myjobmag.com",
+    }[site]
     if (
         parts.scheme != "https"
         or not (host == domain or host.endswith("." + domain))
@@ -101,7 +106,7 @@ def enrich_company(company, row):
 @transaction.atomic
 def import_job(row, country, category_name, dry_run=False):
     site = text(row.get("site")).lower()
-    if site not in {"linkedin", "indeed"}:
+    if site not in {"linkedin", "indeed", "hotnigerianjobs", "myjobmag"}:
         raise ValidationError("Unsupported source")
     url = canonical_url(row.get("job_url"), site)
     content = content_fields(row)

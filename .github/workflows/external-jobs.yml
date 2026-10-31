@@ -11,7 +11,12 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    timeout-minutes: 15
     env:
       DATABASE_URL: ${{ secrets.EXTERNAL_JOBS_DATABASE_URL }}
       DJANGO_SETTINGS_MODULE: config.settings.base
@@ -24,4 +29,5 @@ jobs:
       - name: Check database configuration
         run: python -c "import os; assert os.environ.get('DATABASE_URL'), 'EXTERNAL_JOBS_DATABASE_URL is required'"
       - run: pip install -r requirements.txt
-      - run: python manage.py sync_external_jobs --results 15
+      - run: python manage.py seed_categories
+      - run: python manage.py sync_external_jobs --all-categories --country Nigeria --location Nigeria --results 5 --shard-count 8 --shard-index ${{ matrix.shard }} --include-local --local-limit 5

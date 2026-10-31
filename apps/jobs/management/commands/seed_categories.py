@@ -113,11 +113,25 @@ class Command(BaseCommand):
     help = "Seeds initial job categories and standard skills"
 
     def handle(self, *args, **options):
+        from apps.jobs.catalog import SEARCHES
+
+        categories = list(CATEGORIES)
+        known = {item[0] for item in categories}
+        categories.extend(
+            (name, "bi-briefcase", f"{name} opportunities in Nigeria.")
+            for name in SEARCHES
+            if name not in known
+        )
         count = 0
-        for name, icon, desc in CATEGORIES:
+        for name, icon, desc in categories:
             cat, created = JobCategory.objects.get_or_create(
-                slug=slugify(name),
-                defaults={"name": name, "icon": icon, "description": desc, "is_active": True},
+                name=name,
+                defaults={
+                    "slug": slugify(name),
+                    "icon": icon,
+                    "description": desc,
+                    "is_active": True,
+                },
             )
             if created:
                 count += 1

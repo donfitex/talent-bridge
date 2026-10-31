@@ -112,3 +112,38 @@ def test_import_preserves_published_status(client):
     job.refresh_from_db()
     assert job.status == "PUBLISHED"
     assert b"Published" in client.get(f"/jobs/{job.pk}/").content
+
+
+def test_nigeria_catalog_and_sharding():
+    from apps.jobs.catalog import SEARCHES, classify
+
+    assert len(SEARCHES) >= 40
+    assert classify("Nurse") == "Healthcare"
+    assert classify("Driver") == "Transport and Driving"
+    groups = [
+        {name for index, name in enumerate(SEARCHES) if index % 8 == shard} for shard in range(8)
+    ]
+    assert set.union(*groups) == set(SEARCHES)
+    assert sum(map(len, groups)) == len(SEARCHES)
+
+
+def test_local_structured_data():
+    from apps.jobs.local_sources import structured_jobs
+
+    jobs = list(
+        structured_jobs(
+            {"@graph": [{"@type": "JobPosting", "title": "Teacher"}, {"@type": "Organization"}]}
+        )
+    )
+    assert len(jobs) == 1 and jobs[0]["title"] == "Teacher"
+
+
+def test_local_source_url_validation():
+    from apps.jobs.external import canonical_url
+
+    assert (
+        canonical_url("https://www.myjobmag.com/job/teacher?tracking=yes", "myjobmag")
+        == "https://www.myjobmag.com/job/teacher"
+    )
+    with pytest.raises(ValidationError):
+        canonical_url("https://myjobmag.com.evil.example/job/x", "myjobmag")
