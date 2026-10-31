@@ -4,7 +4,7 @@ from drf_spectacular.utils import OpenApiParameter, OpenApiTypes, extend_schema
 from rest_framework import decorators, permissions, status, viewsets
 
 from apps.common.exceptions import TalentBridgeAPIException
-from apps.common.permissions import IsEmployerUser
+from apps.common.permissions import IsApprovedCompanyCreator
 from apps.common.responses import APIResponse
 from apps.companies.models import Company, EmployerMembership, EmployerRole
 from apps.companies.permissions import IsCompanyAdminOrOwner, IsCompanyMember
@@ -29,7 +29,7 @@ class CompanyViewSet(viewsets.ModelViewSet):
         if self.action in ["list", "retrieve"]:
             return [permissions.AllowAny()]
         if self.action == "create":
-            return [IsEmployerUser()]
+            return [IsApprovedCompanyCreator()]
         if self.action == "members":
             return [permissions.IsAuthenticated(), IsCompanyMember()]
         return [permissions.IsAuthenticated(), IsCompanyAdminOrOwner()]

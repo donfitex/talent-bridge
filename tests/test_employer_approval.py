@@ -30,3 +30,22 @@ def test_employer_requires_admin_approval(client, api_client, recruitment):
 def test_new_employer_is_not_approved():
     user = User.objects.create_user("pending@example.com", "password", role="EMPLOYER")
     assert not user.employer_approved
+
+
+def test_company_creation_requires_approval(client, api_client, recruitment):
+    from apps.companies.models import Company
+
+    _, employer, _, _ = recruitment
+    employer.employer_approved = False
+    employer.save(update_fields=["employer_approved"])
+    client.force_login(employer)
+    api_client.force_authenticate(employer)
+    count = Company.objects.count()
+    assert client.get("/employer/company/").url == "/employer/dashboard/"
+    assert client.post("/employer/company/", {"name": "Blocked"}).status_code == 302
+    assert api_client.post("/api/v1/companies/", {"name": "Blocked"}).status_code == 403
+    assert Company.objects.count() == count
+    employer.employer_approved = True
+    employer.save(update_fields=["employer_approved"])
+    assert client.get("/employer/company/").status_code == 200
+    assert api_client.post("/api/v1/companies/", {"name": "Approved company"}).status_code == 201

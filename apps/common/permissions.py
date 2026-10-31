@@ -38,3 +38,25 @@ class IsOwnerOrAdmin(permissions.BasePermission):
         if hasattr(obj, "candidate") and hasattr(obj.candidate, "user"):
             return obj.candidate.user == request.user
         return False
+
+
+def can_create_company(user):
+    return bool(
+        user
+        and user.is_authenticated
+        and user.is_active
+        and (
+            user.is_staff
+            or user.is_admin_user
+            or ((user.is_employer or user.is_recruiter) and user.employer_approved)
+        )
+    )
+
+
+class IsApprovedCompanyCreator(permissions.BasePermission):
+    message = (
+        "Your employer account must be approved by an administrator before you can add a company."
+    )
+
+    def has_permission(self, request, view):
+        return can_create_company(request.user)

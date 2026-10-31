@@ -243,6 +243,14 @@ def companies(request):
 
 @employer_required
 def company_create(request):
+    from apps.common.permissions import can_create_company
+
+    if not can_create_company(request.user):
+        messages.warning(
+            request,
+            "Your employer account must be approved by an administrator before you can add a company.",
+        )
+        return redirect("web-employer")
     form = CompanyForm(request.POST or None, request.FILES or None)
 
     def save(form):

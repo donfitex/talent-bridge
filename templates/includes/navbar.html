@@ -54,7 +54,7 @@
                                 <li><a class="dropdown-item" href="/candidate/resumes/"><i class="bi bi-file-earmark-text me-2"></i> Resumes</a></li>
                                 <li><a class="dropdown-item" href="/candidate/applications/"><i class="bi bi-folder-check me-2"></i> Applications</a></li>
                             {% elif user.is_employer or user.is_recruiter %}
-                                <li><a class="dropdown-item" href="/employer/company/"><i class="bi bi-building me-2"></i> Company Profile</a></li>
+                                {% if user.employer_approved or user.is_staff or user.is_admin_user %}<li><a class="dropdown-item" href="/employer/company/"><i class="bi bi-building me-2"></i> Company Profile</a></li>{% endif %}
                                 <li><a class="dropdown-item" href="/employer/jobs/"><i class="bi bi-briefcase me-2"></i> Manage Jobs</a></li>
                             {% endif %}
                             {% if user.is_staff and perms.common.view_contactmessage %}<li><a class="dropdown-item" href="{% url 'web-contact-inbox' %}">Contact inbox</a></li>{% endif %}{% if user.is_staff %}<li><a class="dropdown-item" href="/admin/">Administration</a></li>{% endif %}
