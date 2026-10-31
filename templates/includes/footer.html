@@ -13,7 +13,13 @@
                     <a href="/jobs/" class="text-decoration-none text-muted">Jobs</a>
                     <a href="/companies/" class="text-decoration-none text-muted">Companies</a>
                     <a href="/contact/" class="text-decoration-none text-muted">Contact us</a>
-                    <a href="/admin/" class="text-decoration-none text-muted">Staff administration</a>
+                    {% if user.is_authenticated and user.is_staff %}
+                    <a href="{% url 'admin:index' %}" class="text-decoration-none text-muted">Staff administration</a>
+                    {% elif user.is_authenticated %}
+                    <a href="/dashboard/" class="text-decoration-none text-muted">My dashboard</a>
+                    {% else %}
+                    <a href="{% url 'web-register' %}" class="text-decoration-none text-muted">Create an account</a>
+                    {% endif %}
                 </div>
                 <p class="text-muted small mt-2 mb-0">&copy; 2026 TalentBridge Platform. All rights reserved.</p>
             </div>
