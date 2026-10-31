@@ -143,6 +143,9 @@ def signout(request):
 @candidate_required
 def apply(request, pk):
     job = get_object_or_404(Job, pk=pk, status="PUBLISHED")
+    if job.source_url:
+        messages.info(request, "Apply for this imported job using the original site link.")
+        return redirect("web-job-detail", pk=job.pk)
     form = ApplicationForm(request.POST or None, user=request.user)
     return form_page(
         request,

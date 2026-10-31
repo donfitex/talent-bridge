@@ -121,8 +121,12 @@ class Job(UUIDTimeStampedModel):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name="created_jobs",
     )
+    source_url = models.URLField(max_length=1000, unique=True, null=True, blank=True)
+    source_site = models.CharField(max_length=20, blank=True)
+
     title = models.CharField(_("job title"), max_length=255, db_index=True)
     slug = models.SlugField(_("slug"), max_length=255, unique=True, db_index=True)
     description = models.TextField(_("job description"))
@@ -237,7 +241,7 @@ class Job(UUIDTimeStampedModel):
     @property
     def is_accepting_applications(self) -> bool:
         """Determines whether the job is currently eligible to receive applications."""
-        if self.status != JobStatus.PUBLISHED:
+        if self.source_url or self.status != JobStatus.PUBLISHED:
             return False
         if self.application_deadline and self.application_deadline < timezone.now():
             return False

@@ -72,6 +72,8 @@ class JobSerializer(serializers.ModelSerializer):
             "company_logo",
             "company_slug",
             "created_by",
+            "source_url",
+            "source_site",
             "title",
             "slug",
             "description",
@@ -98,6 +100,8 @@ class JobSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = [
+            "source_url",
+            "source_site",
             "id",
             "slug",
             "created_by",

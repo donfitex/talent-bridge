@@ -1,0 +1,27 @@
+name: Sync external jobs
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * *"
+permissions:
+  contents: read
+concurrency:
+  group: external-job-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.EXTERNAL_JOBS_DATABASE_URL }}
+      DJANGO_SETTINGS_MODULE: config.settings.base
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Check database configuration
+        run: python -c "import os; assert os.environ.get('DATABASE_URL'), 'EXTERNAL_JOBS_DATABASE_URL is required'"
+      - run: pip install -r requirements.txt
+      - run: python manage.py sync_external_jobs --results 15

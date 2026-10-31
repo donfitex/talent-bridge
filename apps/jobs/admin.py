@@ -5,10 +5,10 @@ from apps.jobs.models import Job, JobCategory, JobSkill, Skill
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "created_at"]
-    readonly_fields = ["created_at", "updated_at"]
+    list_display = ["__str__", "status", "source_site", "created_at"]
+    readonly_fields = ["created_at", "updated_at", "source_url", "source_site"]
     search_fields = ["title", "description"]
-    list_filter = ["status", "workplace_type"]
+    list_filter = ["status", "source_site", "workplace_type"]
     list_select_related = True
 
 
