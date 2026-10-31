@@ -267,3 +267,5 @@ if RESUME_STORAGE_BACKEND == "neon":
         "default": {"BACKEND": "apps.resumes.storage.NeonMediaStorage"},
         "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
     }
+
+NEON_AUTH_BASE_URL = env("NEON_AUTH_BASE_URL", default="")

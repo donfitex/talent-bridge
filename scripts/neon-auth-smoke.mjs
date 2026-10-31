@@ -1,0 +1,32 @@
+import { createAuthClient } from '@neon/auth';
+import { randomUUID, randomBytes } from 'node:crypto';
+process.loadEnvFile('.env');
+let cookie = '';
+const nativeFetch = globalThis.fetch;
+globalThis.fetch = async (url, init) => {
+ const headers = new Headers(init?.headers);
+ headers.set('origin', 'https://talent-bridge-6um8.onrender.com');
+ if(cookie) headers.set('cookie',cookie);
+ const response = await nativeFetch(url,{...init,headers});
+ const values=response.headers.getSetCookie();
+ if(values.length) cookie=values.map(v=>v.split(';')[0]).join('; ');
+ return response;
+};
+const client = createAuthClient(process.env.NEON_AUTH_BASE_URL);
+const email = `sdk-test-${randomUUID()}@example.invalid`;
+const password = randomBytes(32).toString('base64url');
+const result = await client.signUp.email({email,password,name:'TalentBridge SDK verification'});
+if(result.error) throw new Error(`Signup failed: ${result.error.code}`);
+console.log('PASS managed email/password signup');
+const session = await client.getSession();
+if(session.error || session.data?.user?.email !== email) throw new Error('Current user mismatch');
+console.log('PASS current user read back; identity matches signup');
+await client.signOut();
+console.log('PASS sign out');
+const login = await client.signIn.email({email,password});
+if(login.error) throw new Error(`Sign in failed: ${login.error.code}`);
+const restored = await client.getSession();
+if(restored.data?.user?.email !== email) throw new Error('Session restoration failed');
+console.log('PASS sign in and restored session');
+await client.signOut();
+

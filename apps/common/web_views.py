@@ -372,3 +372,13 @@ def contact(request):
             "content": SiteContent.objects.filter(key="contact").first(),
         },
     )
+
+
+def managed_auth(request):
+    from django.conf import settings
+    from django.http import HttpResponse
+
+    url = getattr(settings, "NEON_AUTH_BASE_URL", "")
+    if not url:
+        return HttpResponse("Managed signup is not configured.", status=503)
+    return render(request, "web/neon_auth.html", {"neon_auth_url": url})

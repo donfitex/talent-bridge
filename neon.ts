@@ -1,6 +1,7 @@
 import { defineConfig } from "@neon/config/v1";
 
 export default defineConfig({
+  auth: true,
   // Declare your Neon services here
   buckets: {
     // "private" is the default; use "public_read" for anonymous reads
