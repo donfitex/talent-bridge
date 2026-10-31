@@ -1,0 +1,5 @@
+{% extends "admin/index.html" %}
+{% block content %}
+{% if perms.users.view_employeraccount %}<section class="module"><h2>Employer account approvals</h2><div style="padding: 16px;"><p>Review employer accounts before they can post jobs.</p><p><a href="{% url 'admin:users_employeraccount_changelist' %}?employer_approved__exact=0&amp;is_active__exact=1">Awaiting administrator approval</a> · <a href="{% url 'admin:users_employeraccount_changelist' %}">Manage all employers</a> · <a href="{% url 'admin:users_employeraccount_changelist' %}?is_active__exact=0">Deactivated accounts</a></p></div></section>{% endif %}
+{{ block.super }}
+{% endblock %}

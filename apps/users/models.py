@@ -124,3 +124,10 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampedModel):
     @property
     def is_admin_user(self) -> bool:
         return self.role == UserRole.ADMIN or self.is_superuser
+
+
+class EmployerAccount(User):
+    class Meta:
+        proxy = True
+        verbose_name = "employer account"
+        verbose_name_plural = "Employer approvals and account status"

@@ -130,7 +130,11 @@ def test_every_model_has_admin_controls(client, recruitment):
                 == 200
             )
 
-            for obj in model.objects.all()[:2]:
+            from django.test import RequestFactory
+
+            admin_request = RequestFactory().get("/admin/")
+            admin_request.user = user
+            for obj in admin.site._registry[model].get_queryset(admin_request)[:2]:
                 response = client.get(
                     reverse(
                         f"admin:{model._meta.app_label}_{model._meta.model_name}_change",

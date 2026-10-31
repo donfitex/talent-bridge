@@ -15,6 +15,7 @@ class CompanyVerificationStatus(models.TextChoices):
 
 
 class CompanySize(models.TextChoices):
+    UNKNOWN = "UNKNOWN", _("Unknown")
     SIZE_1_10 = "1-10", _("1-10 employees")
     SIZE_11_50 = "11-50", _("11-50 employees")
     SIZE_51_200 = "51-200", _("51-200 employees")
@@ -36,7 +37,7 @@ class Company(UUIDTimeStampedModel):
         _("company size"),
         max_length=20,
         choices=CompanySize.choices,
-        default=CompanySize.SIZE_11_50,
+        default=CompanySize.UNKNOWN,
     )
     website = models.URLField(_("website URL"), max_length=255, blank=True)
     logo = models.ImageField(_("company logo"), upload_to="company_logos/", blank=True, null=True)
