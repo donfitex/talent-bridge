@@ -2,7 +2,7 @@ name: Sync external jobs
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 7 * * *"
+    - cron: "17 7,19 * * *"
 permissions:
   contents: read
 concurrency:
@@ -29,5 +29,7 @@ jobs:
       - name: Check database configuration
         run: python -c "import os; assert os.environ.get('DATABASE_URL'), 'EXTERNAL_JOBS_DATABASE_URL is required'"
       - run: pip install -r requirements.txt
+      - name: Check database migrations
+        run: python manage.py migrate --check
       - run: python manage.py seed_categories
       - run: python manage.py sync_external_jobs --all-categories --country Nigeria --location Nigeria --results 5 --shard-count 8 --shard-index ${{ matrix.shard }} --include-local --local-limit 5

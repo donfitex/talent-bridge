@@ -44,3 +44,18 @@ def test_multiple_categories_and_external_apply(client, api_client, recruitment)
     assert "careers.example.com/job/123" in html
     assert "Apply online." in html
     assert "Share this job" in html and "WhatsApp" in html
+
+
+def test_publication_dates_and_employer_status(client, recruitment):
+    _, employer, job, _ = recruitment
+    assert "Published:" in client.get(f"/jobs/{job.pk}/").content.decode()
+    assert "Published:" in client.get("/jobs/").content.decode()
+    client.force_login(employer)
+    html = client.get("/employer/dashboard/").content.decode()
+    assert "bg-success" in html and "Published</button>" in html
+    assert "Closing date:" in html
+
+
+def test_external_fields_have_backward_compatible_database_defaults():
+    assert Job._meta.get_field("external_apply_url").db_default == ""
+    assert Job._meta.get_field("how_to_apply").db_default == ""

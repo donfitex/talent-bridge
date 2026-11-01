@@ -134,11 +134,12 @@ class Job(UUIDTimeStampedModel):
     description = models.TextField(_("job description"))
     external_apply_url = models.URLField(
         "external application link",
+        db_default="",
         max_length=1000,
         blank=True,
         validators=[URLValidator(schemes=["http", "https"])],
     )
-    how_to_apply = models.TextField(blank=True)
+    how_to_apply = models.TextField(blank=True, db_default="")
     additional_categories = models.ManyToManyField(
         JobCategory, blank=True, related_name="additional_jobs"
     )
