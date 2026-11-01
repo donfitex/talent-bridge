@@ -14,7 +14,7 @@ class JobFilter(django_filters.FilterSet):
     title = django_filters.CharFilter(field_name="title", lookup_expr="icontains")
     company = django_filters.CharFilter(field_name="company__name", lookup_expr="icontains")
     company_slug = django_filters.CharFilter(field_name="company__slug", lookup_expr="exact")
-    category = django_filters.CharFilter(field_name="category__slug", lookup_expr="exact")
+    category = django_filters.CharFilter(method="filter_category")
     skills = django_filters.CharFilter(method="filter_skills", label="Filter by Skill Slug or Name")
     country = django_filters.CharFilter(field_name="country", lookup_expr="iexact")
     location = django_filters.CharFilter(field_name="location", lookup_expr="icontains")
@@ -67,4 +67,9 @@ class JobFilter(django_filters.FilterSet):
         skills_list = [s.strip() for s in value.split(",") if s.strip()]
         return queryset.filter(
             Q(job_skills__skill__name__in=skills_list) | Q(job_skills__skill__slug__in=skills_list)
+        ).distinct()
+
+    def filter_category(self, queryset, name, value):
+        return queryset.filter(
+            Q(category__slug=value) | Q(additional_categories__slug=value)
         ).distinct()
