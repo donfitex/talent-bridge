@@ -44,7 +44,7 @@ class ApplicationSubmissionService:
                 detail="Job listing not found.", code="JOB_NOT_FOUND", status_code=404
             ) from None
 
-        if job.source_url:
+        if job.application_url:
             raise TalentBridgeAPIException(
                 detail="Apply for this imported job on the original site.",
                 code="EXTERNAL_APPLICATION_REQUIRED",

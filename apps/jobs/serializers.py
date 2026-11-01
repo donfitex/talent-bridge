@@ -74,6 +74,9 @@ class JobSerializer(serializers.ModelSerializer):
             "created_by",
             "source_url",
             "source_site",
+            "external_apply_url",
+            "how_to_apply",
+            "additional_categories",
             "title",
             "slug",
             "description",
@@ -131,7 +134,9 @@ class JobSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         skill_ids = validated_data.pop("skill_ids", [])
+        categories = validated_data.pop("additional_categories", [])
         job = Job.objects.create(**validated_data)
+        job.additional_categories.set(categories)
         for skill_id in skill_ids:
             try:
                 skill = Skill.objects.get(id=skill_id)

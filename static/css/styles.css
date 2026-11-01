@@ -147,3 +147,18 @@ a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible
 }
 [data-bs-theme="dark"] :focus-visible { outline-color: #facc15; }
 @media (prefers-reduced-motion: reduce) { .card-hover, .skeleton { transition: none; animation: none; } }
+
+.job-description ul, .job-description ol { padding-left:1.8rem; }
+[data-bs-theme="dark"] .btn-outline-secondary { color:#cbd5e1; border-color:#94a3b8; }
+[data-bs-theme="dark"] .text-primary { color:#8de2c4 !important; }
+[data-bs-theme="dark"] .btn-link { color:var(--tb-link); }
+[data-bs-theme="dark"] .dropdown-item { color:var(--tb-text); }
+@media print { nav, footer, button, #external-confirm, .alert { display:none !important; } body, .job-card { background:white !important; color:black !important; } .detail-grid { display:block; } a { color:black !important; } }
+
+select[multiple] { min-height: 10rem; }
+
+/* Bootstrap utility specificity must not force a light page in dark mode. */
+body.bg-light { background-color: var(--tb-page) !important; }
+[data-bs-theme="dark"] .bg-light { background-color: var(--tb-page) !important; }
+[data-bs-theme="dark"] .navbar .nav-link { color: #d1d9e6; }
+[data-bs-theme="dark"] .navbar .nav-link:hover { color: #ffffff; }

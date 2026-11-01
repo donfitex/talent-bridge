@@ -63,6 +63,7 @@ def content_fields(row):
     sections = {
         "responsibilities": text(row.get("responsibilities")),
         "requirements": text(row.get("requirements")),
+        "how_to_apply": text(row.get("how_to_apply")),
     }
     aliases = {
         "responsibilities": "responsibilities",
@@ -74,6 +75,9 @@ def content_fields(row):
         "required qualifications": "requirements",
         "what you bring": "requirements",
         "skills and experience": "requirements",
+        "how to apply": "how_to_apply",
+        "method of application": "how_to_apply",
+        "application instructions": "how_to_apply",
     }
     current = None
     extracted = {key: [] for key in sections}
@@ -189,6 +193,8 @@ def import_job(row, country, category_name, dry_run=False):
             else "ONSITE",
             "status": "PENDING_REVIEW",
             "application_deadline": source_deadline(row),
+            "external_apply_url": safe_company_url(row.get("job_url_direct")),
+            "how_to_apply": content["how_to_apply"],
         },
     )
     if dry_run:

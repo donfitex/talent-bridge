@@ -98,7 +98,10 @@ def jobs(request):
     if request.GET.get("location"):
         qs = qs.filter(location__icontains=request.GET["location"])
     if request.GET.get("category"):
-        qs = qs.filter(category__slug=request.GET["category"])
+        qs = qs.filter(
+            Q(category__slug=request.GET["category"])
+            | Q(additional_categories__slug=request.GET["category"])
+        ).distinct()
     return render(
         request,
         "web/jobs.html",
@@ -130,7 +133,12 @@ def job_detail(request, pk):
     return render(
         request,
         "web/job_detail.html",
-        {"job": job, "application": existing, "external_application": external},
+        {
+            "job": job,
+            "application": existing,
+            "external_application": external,
+            "share_links": job_share_links(request, job),
+        },
     )
 
 
@@ -152,7 +160,7 @@ def signout(request):
 @candidate_required
 def apply(request, pk):
     job = get_object_or_404(Job, pk=pk, status="PUBLISHED")
-    if job.source_url:
+    if job.application_url:
         messages.info(request, "Apply for this imported job using the original site link.")
         return redirect("web-job-detail", pk=job.pk)
     form = ApplicationForm(request.POST or None, user=request.user)
@@ -302,6 +310,8 @@ def job_edit(request, pk=None):
             job.created_by = request.user
         JobManagementService.verify_employer_permission(request.user, job.company)
         job.save()
+        form.instance = job
+        form.save_m2m()
 
     return form_page(
         request, "Edit vacancy" if instance else "Create vacancy", form, save, "web-employer"
@@ -505,7 +515,7 @@ def company_detail(request, slug):
 @require_POST
 def confirm_external_application(request, pk):
     job = get_object_or_404(Job, pk=pk, status=JobStatus.PUBLISHED)
-    if not job.source_url:
+    if not job.application_url:
         raise PermissionDenied
     if request.POST.get("answer") == "yes":
         candidate, _ = CandidateProfile.objects.get_or_create(user=request.user)
@@ -531,3 +541,19 @@ def contact_inbox(request):
     response = render(request, "web/contact_inbox.html", {"page_obj": page})
     response["Cache-Control"] = "private, no-store"
     return response
+
+
+def job_share_links(request, job):
+    from urllib.parse import quote, urlencode
+
+    url = request.build_absolute_uri()
+    return [
+        ("Facebook", "https://www.facebook.com/sharer/sharer.php?" + urlencode({"u": url})),
+        (
+            "X / Twitter",
+            "https://twitter.com/intent/tweet?" + urlencode({"url": url, "text": job.title}),
+        ),
+        ("LinkedIn", "https://www.linkedin.com/sharing/share-offsite/?" + urlencode({"url": url})),
+        ("WhatsApp", "https://wa.me/?" + urlencode({"text": job.title + " " + url})),
+        ("Email", "mailto:?" + urlencode({"subject": job.title, "body": url}, quote_via=quote)),
+    ]

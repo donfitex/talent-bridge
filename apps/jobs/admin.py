@@ -8,7 +8,15 @@ from apps.jobs.services import JobManagementService
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
+    filter_horizontal = ["additional_categories"]
     actions = ["publish_selected"]
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name in {"description", "responsibilities", "requirements", "how_to_apply"}:
+            from apps.common.widgets import RichTextWidget
+
+            kwargs["widget"] = RichTextWidget()
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
 
     @admin.action(description="Publish selected jobs", permissions=["change"])
     def publish_selected(self, request, queryset):

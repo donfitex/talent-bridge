@@ -47,6 +47,9 @@ class JobForm(forms.ModelForm):
             "responsibilities",
             "requirements",
             "category",
+            "additional_categories",
+            "external_apply_url",
+            "how_to_apply",
             "location",
             "country",
             "employment_type",
@@ -58,9 +61,22 @@ class JobForm(forms.ModelForm):
             "application_deadline",
         ]
         widgets = {"application_deadline": forms.DateTimeInput(attrs={"type": "datetime-local"})}
+        labels = {
+            "application_deadline": "Application Closing Date",
+            "category": "Primary category",
+            "additional_categories": "Additional categories",
+        }
+        help_texts = {
+            "application_deadline": "Leave blank when not specified.",
+            "additional_categories": "Select any other categories that apply.",
+        }
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
+        from apps.common.widgets import RichTextWidget
+
+        for name in ["description", "responsibilities", "requirements", "how_to_apply"]:
+            self.fields[name].widget = RichTextWidget()
         self.fields["company"].queryset = (
             Company.objects.all()
             if user.is_admin_user

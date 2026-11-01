@@ -1,0 +1,10 @@
+textarea[data-rich-text][hidden] { display:none !important; }
+.job-rich-editor { min-height:220px; background:var(--tb-surface, var(--body-bg,#fff)); color:var(--tb-text,var(--body-fg,#243447)); }
+.ql-toolbar.ql-snow { background:var(--tb-surface,var(--body-bg,#fff)); border-color:var(--tb-border,#8795a5); }
+.ql-snow .ql-stroke { stroke:var(--tb-text,var(--body-fg,#243447)); }
+.ql-snow .ql-fill { fill:var(--tb-text,var(--body-fg,#243447)); }
+.ql-snow .ql-picker { color:var(--tb-text,var(--body-fg,#243447)); }
+.ql-snow .ql-picker-options, .ql-snow .ql-tooltip { background:var(--tb-surface,var(--body-bg,#fff)); color:var(--tb-text,var(--body-fg,#243447)); }
+.ql-container { font-size:1rem; }
+.ql-editor { min-height:220px; }
+.ql-editor p { margin-bottom:.5rem; }

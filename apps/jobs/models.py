@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
@@ -85,6 +86,7 @@ class WorkplaceType(models.TextChoices):
 
 
 class ExperienceLevel(models.TextChoices):
+    UNSPECIFIED = "UNSPECIFIED", _("Unspecified")
     ENTRY_LEVEL = "ENTRY_LEVEL", _("Entry Level")
     MID_LEVEL = "MID_LEVEL", _("Mid Level")
     SENIOR_LEVEL = "SENIOR_LEVEL", _("Senior Level")
@@ -130,6 +132,17 @@ class Job(UUIDTimeStampedModel):
     title = models.CharField(_("job title"), max_length=255, db_index=True)
     slug = models.SlugField(_("slug"), max_length=255, unique=True, db_index=True)
     description = models.TextField(_("job description"))
+    external_apply_url = models.URLField(
+        "external application link",
+        max_length=1000,
+        blank=True,
+        validators=[URLValidator(schemes=["http", "https"])],
+    )
+    how_to_apply = models.TextField(blank=True)
+    additional_categories = models.ManyToManyField(
+        JobCategory, blank=True, related_name="additional_jobs"
+    )
+
     responsibilities = models.TextField(_("responsibilities"), blank=True)
     requirements = models.TextField(_("requirements"), blank=True)
     category = models.ForeignKey(
@@ -156,7 +169,7 @@ class Job(UUIDTimeStampedModel):
         _("experience level"),
         max_length=20,
         choices=ExperienceLevel.choices,
-        default=ExperienceLevel.MID_LEVEL,
+        default=ExperienceLevel.UNSPECIFIED,
         db_index=True,
     )
 
@@ -169,7 +182,7 @@ class Job(UUIDTimeStampedModel):
     salary_max = models.DecimalField(
         _("maximum salary"), max_digits=12, decimal_places=2, null=True, blank=True
     )
-    salary_currency = models.CharField(_("salary currency"), max_length=3, default="USD")
+    salary_currency = models.CharField(_("salary currency"), max_length=3, default="NGN")
     salary_period = models.CharField(
         _("salary period"),
         max_length=20,
@@ -212,7 +225,7 @@ class Job(UUIDTimeStampedModel):
                     {"salary_min": _("Minimum salary cannot be greater than maximum salary.")}
                 )
 
-        if self.application_deadline and self.status == JobStatus.PUBLISHED:
+        if self.application_deadline and self.status == JobStatus.PUBLISHED and self._state.adding:
             if self.application_deadline < timezone.now():
                 raise ValidationError(
                     {
@@ -239,13 +252,17 @@ class Job(UUIDTimeStampedModel):
         super().save(*args, **kwargs)
 
     @property
+    def application_url(self):
+        return self.external_apply_url or self.source_url or ""
+
+    @property
     def is_expired(self):
         return bool(self.application_deadline and self.application_deadline <= timezone.now())
 
     @property
     def is_accepting_applications(self) -> bool:
         """Determines whether the job is currently eligible to receive applications."""
-        if self.source_url or self.status != JobStatus.PUBLISHED:
+        if self.application_url or self.status != JobStatus.PUBLISHED:
             return False
         if self.application_deadline and self.application_deadline < timezone.now():
             return False

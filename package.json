@@ -8,7 +8,8 @@
     "@neon/config": "^1.9.6",
     "@neon/env": "^1.6.6",
     "esbuild": "^0.28.2",
-    "files-sdk": "^3.1.2"
+    "files-sdk": "^3.1.2",
+    "quill": "2.0.2"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
@@ -21,6 +22,7 @@
     "build": "tsc --noEmit --project tsconfig.neon.json && node scripts/build.mjs",
     "storage:verify": "node scripts/neon-storage-smoke.mjs",
     "auth:verify": "node scripts/neon-auth-smoke.mjs",
-    "auth:bundle": "esbuild static/js/neon-auth-source.js --bundle --minify --outfile=static/js/neon-auth.js"
+    "auth:bundle": "esbuild static/js/neon-auth-source.js --bundle --minify --outfile=static/js/neon-auth.js",
+    "editor:bundle": "esbuild static/js/rich-editor-source.js --bundle --minify --outfile=static/js/rich-editor.js"
   }
 }
