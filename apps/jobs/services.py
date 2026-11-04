@@ -13,15 +13,10 @@ class JobManagementService:
     """
 
     @staticmethod
-    def verify_employer_permission(user: User, company: Company) -> EmployerMembership:
+    def verify_employer_permission(user: User, company: Company) -> None:
         """Verifies that the user has an active membership in the given company."""
         if user.is_staff or getattr(user, "is_admin_user", False):
-            membership = EmployerMembership.objects.filter(company=company, is_active=True).first()
-            if not membership:
-                membership = EmployerMembership.objects.create(
-                    user=user, company=company, role="ADMIN", is_active=True
-                )
-            return membership
+            return
 
         if not user.employer_approved:
             raise TalentBridgeAPIException(
@@ -30,7 +25,7 @@ class JobManagementService:
                 status_code=403,
             )
         try:
-            return EmployerMembership.objects.get(user=user, company=company, is_active=True)
+            EmployerMembership.objects.get(user=user, company=company, is_active=True)
         except EmployerMembership.DoesNotExist:
             raise TalentBridgeAPIException(
                 detail="You do not have authorization to manage job listings for this company.",

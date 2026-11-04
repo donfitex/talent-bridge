@@ -142,3 +142,23 @@ def test_every_model_has_admin_controls(client, recruitment):
                     )
                 )
                 assert response.status_code == 200, model
+
+def test_publish_all_vacancies_does_not_recreate_inactive_membership(client, recruitment):
+    from apps.companies.models import EmployerMembership
+
+    _, _, job, _ = recruitment
+    admin = User.objects.create_superuser("publisher@example.com", "password")
+    EmployerMembership.objects.filter(company=job.company).update(is_active=False)
+    membership = EmployerMembership.objects.create(
+        company=job.company, user=admin, role="ADMIN", is_active=False
+    )
+    job.status = "PENDING_REVIEW"
+    job.save()
+    client.force_login(admin)
+
+    assert client.get("/employer/jobs/publish-all/").status_code == 405
+    assert client.post("/employer/jobs/publish-all/").url == "/employer/dashboard/"
+    job.refresh_from_db()
+    membership.refresh_from_db()
+    assert job.status == "PUBLISHED"
+    assert not membership.is_active

@@ -4,6 +4,7 @@ from apps.common import web_views as v
 from apps.common.web_forms import EmailLoginForm
 
 urlpatterns = [
+    path("employer/jobs/publish-all/", v.publish_all_vacancies, name="web-publish-all-vacancies"),
     path("staff/contact-messages/", v.contact_inbox, name="web-contact-inbox"),
     path(
         "jobs/<uuid:pk>/external/confirm/",

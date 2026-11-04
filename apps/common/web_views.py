@@ -269,18 +269,20 @@ def company_create(request):
     return form_page(request, "Create company profile", form, save, "web-employer")
 
 
+def employer_vacancies(user):
+    qs = Job.objects.select_related("company", "category")
+    if not (user.is_staff or user.is_admin_user):
+        qs = qs.filter(company__memberships__user=user, company__memberships__is_active=True)
+    return qs
+
+
 @employer_required
 def employer_dashboard(request):
-    qs = Job.objects.select_related("company", "category")
-    if not request.user.is_admin_user:
-        qs = qs.filter(
-            company__memberships__user=request.user, company__memberships__is_active=True
-        )
     return render(
         request,
         "web/employer.html",
         {
-            "jobs": qs,
+            "jobs": employer_vacancies(request.user),
             "applications": employer_applications(request.user)[:100],
             "statuses": ApplicationTransitionService.transitions,
         },
@@ -557,3 +559,34 @@ def job_share_links(request, job):
         ("WhatsApp", "https://wa.me/?" + urlencode({"text": job.title + " " + url})),
         ("Email", "mailto:?" + urlencode({"subject": job.title, "body": url}, quote_via=quote)),
     ]
+
+
+@employer_required
+@require_POST
+def publish_all_vacancies(request):
+    if not (request.user.is_staff or request.user.is_admin_user or request.user.employer_approved):
+        raise PermissionDenied
+    eligible = employer_vacancies(request.user).filter(
+        status__in=[JobStatus.DRAFT, JobStatus.PENDING_REVIEW]
+    )
+    published = skipped = 0
+    for pk in list(eligible.values_list("pk", flat=True)):
+        try:
+            with transaction.atomic():
+                job = eligible.select_for_update(of=("self",)).filter(pk=pk).first()
+                if job is None:
+                    continue
+                JobManagementService.publish_job(job, request.user)
+        except (APIException, ValidationError):
+            skipped += 1
+        else:
+            published += 1
+    if published:
+        messages.success(request, f"Published {published} job(s).")
+    if skipped:
+        messages.warning(
+            request, f"Skipped {skipped} job(s). Check their details and closing dates."
+        )
+    if not published and not skipped:
+        messages.info(request, "No draft or pending-review jobs to publish.")
+    return redirect("web-employer")

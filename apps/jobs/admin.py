@@ -1,40 +1,15 @@
 from django.contrib import admin, messages
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.shortcuts import redirect
-from django.urls import path
-from django.views.decorators.http import require_POST
+from django.core.exceptions import ValidationError
 from rest_framework.exceptions import APIException
 
-from apps.jobs.models import Job, JobCategory, JobSkill, JobStatus, Skill
+from apps.jobs.models import Job, JobCategory, JobSkill, Skill
 from apps.jobs.services import JobManagementService
 
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    change_list_template = "admin/jobs/job/change_list.html"
     filter_horizontal = ["additional_categories"]
     actions = ["publish_selected"]
-
-    def get_urls(self):
-        return [
-            path(
-                "publish-all/",
-                self.admin_site.admin_view(require_POST(self.publish_all)),
-                name="jobs_job_publish_all",
-            ),
-        ] + super().get_urls()
-
-    def publish_all(self, request):
-        if not self.has_change_permission(request):
-            raise PermissionDenied
-        jobs = self.get_queryset(request).filter(
-            status__in=[JobStatus.DRAFT, JobStatus.PENDING_REVIEW]
-        )
-        if jobs.exists():
-            self.publish_selected(request, jobs.iterator(chunk_size=100))
-        else:
-            self.message_user(request, "No draft or pending-review jobs to publish.")
-        return redirect("admin:jobs_job_changelist")
 
     def formfield_for_dbfield(self, db_field, request, **kwargs):
         if db_field.name in {"description", "responsibilities", "requirements", "how_to_apply"}:
